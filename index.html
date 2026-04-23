@@ -2,396 +2,980 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Pieers Auditor PRO - Consolidado</title>
+    <title>Pieers Auditor PRO v3</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         * { font-family: 'Arial Black', sans-serif; box-sizing: border-box; }
         body { background: #121212; color: #e0e0e0; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* CABECERA */
-        .header-app { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #1e1e1e; border-bottom: 3px solid #3498db; }
-        .btn-menu { background: #3498db; color: white; border: none; padding: 10px; border-radius: 5px; font-size: 11px; cursor: pointer; }
-        
-        .menu-dropdown { 
-            display: none; position: absolute; right: 10px; top: 55px; background: #1e1e1e; 
-            z-index: 5000; border: 1px solid #333; border-radius: 8px; min-width: 280px;
+        /* ── SELECTOR DE MODO ── */
+        #pantalla-modo {
+            position: fixed; inset: 0; background: #121212; z-index: 9000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 24px; padding: 28px;
         }
-        .menu-dropdown button { 
-            width: 100%; padding: 15px; background: none; border: none; color: white; 
+        .logo-modo { font-size: 18px; color: #3498db; text-align: center; }
+        .logo-sub  { font-size: 11px; color: #888; text-align: center; margin-top: -14px; }
+        .btn-modo  {
+            width: 100%; padding: 26px 20px; border: none; border-radius: 14px;
+            font-size: 16px; font-weight: bold; cursor: pointer; text-align: left;
+            display: flex; align-items: center; gap: 16px;
+        }
+        .btn-modo .ico  { font-size: 34px; }
+        .btn-modo .txt  { display: flex; flex-direction: column; }
+        .btn-modo .tit  { font-size: 15px; }
+        .btn-modo .desc { font-size: 10px; font-weight: normal; margin-top: 4px; opacity: 0.85; }
+        .btn-comp { background: #2471a3; color: white; }
+        .btn-inv  { background: #1e8449; color: white; }
+
+        /* ── CABECERA ── */
+        .header-app { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #1e1e1e; border-bottom: 3px solid var(--cm); flex-shrink: 0; }
+        .badge-modo { font-size: 9px; padding: 3px 8px; border-radius: 10px; color: white; background: var(--cm); margin-left: 6px; }
+        .btn-menu   { background: var(--cm); color: white; border: none; padding: 9px 11px; border-radius: 5px; font-size: 11px; cursor: pointer; }
+        .btn-cambio { background: #444; color: #ccc; border: none; padding: 8px 10px; border-radius: 5px; font-size: 10px; cursor: pointer; }
+
+        .menu-dropdown {
+            display: none; position: absolute; right: 10px; top: 52px; background: #1e1e1e;
+            z-index: 5000; border: 1px solid #444; border-radius: 8px; min-width: 280px;
+        }
+        .menu-dropdown button {
+            width: 100%; padding: 14px; background: none; border: none; color: white;
             text-align: left; border-bottom: 1px solid #333; cursor: pointer; font-size: 11px;
         }
+        .menu-dropdown button:hover { background: #2a2a2a; }
 
-        #scanner { 
-            width: 96%; margin: 8px auto; display: block; padding: 15px; font-size: 22px; 
-            border-radius: 10px; border: 4px solid #3498db; text-align: center; background: #fff; color: #333;
+        /* ── SCANNER INPUT ── */
+        #scanner {
+            width: 96%; margin: 6px auto; display: block; padding: 13px;
+            font-size: 20px; border-radius: 10px; border: 4px solid var(--cm);
+            text-align: center; background: #fff; color: #333; flex-shrink: 0;
+            /* Evita autocorrección/sugerencias que interfieren con lectora BT */
+            autocomplete: off; autocorrect: off; autocapitalize: off; spellcheck: false;
         }
 
-        /* PROGRESO */
-        .progress-box { background: #1e1e1e; padding: 10px; margin: 0 10px 10px; border-radius: 8px; border: 1px solid #333; }
-        .stats-grid { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .stat-val { display: block; font-size: 22px; color: #2ecc71; text-align: center; }
-        .stat-lab { font-size: 8px; color: #888; text-transform: uppercase; text-align: center; }
-        .bar-bg { background: #333; height: 14px; border-radius: 7px; overflow: hidden; margin-top: 5px; }
-        #bar-fill { background: #2ecc71; height: 100%; width: 0%; transition: width 0.3s; }
+        /* ── PROGRESO ── */
+        .progress-box { background: #1e1e1e; padding: 8px 10px; margin: 0 10px 8px; border-radius: 8px; border: 1px solid #333; flex-shrink: 0; }
+        .stats-grid   { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .stat-val     { display: block; font-size: 20px; color: #2ecc71; text-align: center; }
+        .stat-lab     { font-size: 8px; color: #888; text-transform: uppercase; text-align: center; }
+        .bar-bg       { background: #333; height: 12px; border-radius: 6px; overflow: hidden; }
+        #bar-fill     { background: #2ecc71; height: 100%; width: 0%; transition: width 0.3s; }
 
-        /* VISTA DIVIDIDA */
-        .split-view { display: flex; flex: 1; gap: 6px; overflow: hidden; padding: 0 10px 10px; }
-        .panel { flex: 1; display: flex; flex-direction: column; background: #1a1a1a; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
-        .panel-h { background: #2c3e50; padding: 10px; font-size: 10px; text-align: center; color: #3498db; }
+        /* ── TOAST de carga ── */
+        #toast {
+            display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #2471a3; color: white; padding: 10px 22px; border-radius: 20px;
+            font-size: 13px; z-index: 8000; white-space: nowrap;
+        }
 
-        .scroll { flex: 1; overflow-y: auto; background: white; }
-        table { width: 100%; border-collapse: collapse; color: #333; table-layout: fixed; }
-        th { background: #444; color: white; padding: 6px; font-size: 9px; position: sticky; top: 0; z-index: 10; }
-        td { padding: 12px 4px; border: 1px solid #eee; text-align: center; font-size: 12px; font-weight: bold; }
+        /* ── PANELES ── */
+        .split-view { display: flex; flex: 1; gap: 6px; overflow: hidden; padding: 0 10px 10px; min-height: 0; }
+        .panel      { flex: 1; display: flex; flex-direction: column; background: #1a1a1a; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
+        .panel-h    { background: #2c3e50; padding: 8px; font-size: 10px; text-align: center; color: var(--cm); flex-shrink: 0; }
+        .scroll     { flex: 1; overflow-y: auto; background: white; -webkit-overflow-scrolling: touch; }
 
-        .match { background: #d4edda !important; color: #155724; }
-        .falta { background: #fff3cd !important; color: #856404; }
+        table       { width: 100%; border-collapse: collapse; color: #333; table-layout: fixed; }
+        th          { background: #444; color: white; padding: 5px; font-size: 9px; position: sticky; top: 0; z-index: 10; }
+        td          { padding: 10px 4px; border-bottom: 1px solid #eee; text-align: center; font-size: 12px; font-weight: bold; }
+
+        .match    { background: #d4edda !important; color: #155724; }
+        .falta    { background: #fff3cd !important; color: #856404; }
         .sobrante { background: #f8d7da !important; color: #721c24; }
-        
-        #overlay-error { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(231, 76, 60, 0.96); z-index: 9999; flex-direction: column; 
-            justify-content: center; align-items: center; text-align: center;
+
+        /* ── OVERLAY ERROR ── */
+        #overlay-error {
+            display: none; position: fixed; inset: 0;
+            background: rgba(231,76,60,0.96); z-index: 9999;
+            flex-direction: column; justify-content: center; align-items: center; text-align: center;
         }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 4000; padding: 20px; flex-direction: column; }
-        .card-lote { background: #333; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #3498db; }
-        .hidden { display: none; }
+        /* ── MODALES ── */
+        .modal      { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 4000; padding: 16px; flex-direction: column; }
+        .card-lote  { background: #2a2a2a; padding: 14px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid var(--cm); }
+        .hidden     { display: none !important; }
+
+        /* ── COLORES POR MODO ── */
+        body.modo-comp { --cm: #2471a3; }
+        body.modo-inv  { --cm: #1e8449; }
+
+        /* ── LOADING OVERLAY ── */
+        #loading-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            z-index: 8500; flex-direction: column; justify-content: center; align-items: center; gap: 16px;
+        }
+        .spinner {
+            width: 48px; height: 48px; border: 5px solid #333;
+            border-top-color: #3498db; border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loading-txt { font-size: 14px; color: #ccc; }
     </style>
 </head>
-<body>
+<body class="modo-comp">
+
+<!-- ══════ SELECTOR ══════ -->
+<div id="pantalla-modo">
+    <div class="logo-modo">🔵 PIEERS AUDITOR PRO</div>
+    <div class="logo-sub">Selecciona el modo de trabajo</div>
+    <button class="btn-modo btn-comp" onclick="seleccionarModo('comp')">
+        <span class="ico">📋</span>
+        <span class="txt">
+            <span class="tit">MODO COMPARATIVO</span>
+            <span class="desc">Carga base maestra → pistoleas → detecta FALTA, SOBRA u OK automáticamente.</span>
+        </span>
+    </button>
+    <button class="btn-modo btn-inv" onclick="seleccionarModo('inv')">
+        <span class="ico">📦</span>
+        <span class="txt">
+            <span class="tit">MODO INVENTARIO</span>
+            <span class="desc">Sin base maestra. Pistola libremente → conteo total por código → exporta Excel/TXT.</span>
+        </span>
+    </button>
+</div>
+
+<!-- ══════ APP PRINCIPAL ══════ -->
+<div id="app-principal" class="hidden" style="display:flex;flex-direction:column;height:100vh;">
 
     <div class="header-app">
-        <div style="font-size: 14px; color: #3498db;">PIEERS AUDITOR PRO</div>
-        <button class="btn-menu" onclick="toggleMenu()">☰ OPCIONES</button>
+        <div style="font-size:13px;color:var(--cm);">
+            PIEERS AUDITOR PRO
+            <span class="badge-modo" id="badge-txt">COMPARATIVO</span>
+        </div>
+        <div style="display:flex;gap:6px;">
+            <button class="btn-cambio" onclick="volverSelector()">⇄ MODO</button>
+            <button class="btn-menu"   onclick="toggleMenu()">☰ OPC.</button>
+        </div>
         <div id="menuContent" class="menu-dropdown">
-            <button onclick="document.getElementById('fileInput').click()">📥 CARGAR MAESTRO (EXCEL o TXT)</button>
-            <button onclick="guardarLoteActual()">💾 GUARDAR AUDITORÍA ACTUAL</button>
+            <button id="btn-carga" onclick="document.getElementById('fileInput').click()">📥 CARGAR MAESTRO (EXCEL o TXT)</button>
+            <button onclick="guardarLote()">💾 GUARDAR AUDITORÍA ACTUAL</button>
             <button onclick="abrirModal('modalLotes')">📂 LOTES GUARDADOS / REPORTES</button>
             <button onclick="resetearApp()" style="color:#e74c3c">🗑️ RESETEAR TODO</button>
         </div>
     </div>
 
-    <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .txt, .csv">
-    <input id="scanner" inputmode="none" autofocus placeholder="ESCANEE CÓDIGO (13 DÍGITOS)" autocomplete="off">
+    <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls,.txt,.csv">
+
+    <!-- INPUT ESCÁNER — atributos anti-autocorrección para BT -->
+    <input id="scanner"
+           inputmode="none"
+           autocomplete="off"
+           autocorrect="off"
+           autocapitalize="off"
+           spellcheck="false"
+           autofocus
+           placeholder="ESCANEE CÓDIGO">
 
     <div class="progress-box">
         <div class="stats-grid">
-            <div style="flex:1">
-                <span id="stat-esperado" class="stat-val">0</span>
+            <div style="flex:1" id="blq-esp">
+                <span id="stat-esp" class="stat-val">0</span>
                 <span class="stat-lab">Total Maestro</span>
             </div>
-            <div style="flex:1; border-left: 1px solid #333; border-right: 1px solid #333;">
-                <span id="stat-contado" class="stat-val">0</span>
+            <div style="flex:1;border-left:1px solid #333;border-right:1px solid #333;">
+                <span id="stat-cont" class="stat-val">0</span>
                 <span class="stat-lab">Conteo Real</span>
             </div>
-            <div style="flex:1">
-                <span id="stat-avance" class="stat-val">0%</span>
+            <div style="flex:1" id="blq-avan">
+                <span id="stat-avan" class="stat-val">0%</span>
                 <span class="stat-lab">Avance</span>
             </div>
+            <div style="flex:1;border-left:1px solid #333;" id="blq-unic" class="hidden">
+                <span id="stat-unic" class="stat-val">0</span>
+                <span class="stat-lab">Únicos</span>
+            </div>
         </div>
-        <div class="bar-bg">
-            <div id="bar-fill"></div>
-        </div>
+        <div class="bar-bg"><div id="bar-fill"></div></div>
     </div>
 
-    <div class="split-view">
+    <!-- PANEL COMPARATIVO -->
+    <div class="split-view" id="vista-comp">
         <div class="panel">
             <div class="panel-h">MAESTRO (COMPARATIVA)</div>
-            <div class="scroll">
-                <table>
-                    <thead><tr><th>CÓDIGO</th><th style="width:35px;">EXP</th><th style="width:35px;">REAL</th></tr></thead>
-                    <tbody id="t-maestro"></tbody>
-                </table>
+            <div class="scroll" id="scroll-maestro">
+                <table><thead><tr><th>CÓDIGO</th><th style="width:38px;">ESP</th><th style="width:38px;">REAL</th></tr></thead>
+                <tbody id="t-maestro"></tbody></table>
             </div>
         </div>
         <div class="panel">
             <div class="panel-h">FLUJO DE LECTURA</div>
             <div class="scroll">
-                <table>
-                    <thead><tr><th style="width:30px;">#</th><th>CÓDIGO</th></tr></thead>
-                    <tbody id="t-lectura"></tbody>
-                </table>
+                <table><thead><tr><th style="width:28px;">#</th><th>CÓDIGO</th></tr></thead>
+                <tbody id="t-lectura"></tbody></table>
             </div>
         </div>
     </div>
 
+    <!-- PANEL INVENTARIO -->
+    <div class="split-view hidden" id="vista-inv">
+        <div class="panel">
+            <div class="panel-h">CONTEO ACUMULADO</div>
+            <div class="scroll">
+                <table><thead><tr><th>CÓDIGO</th><th style="width:50px;">CANT.</th></tr></thead>
+                <tbody id="t-inv"></tbody></table>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-h">FLUJO DE LECTURA</div>
+            <div class="scroll">
+                <table><thead><tr><th style="width:28px;">#</th><th>CÓDIGO</th></tr></thead>
+                <tbody id="t-lect-inv"></tbody></table>
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERLAY ERROR -->
     <div id="overlay-error">
-        <h1 style="color:white; font-size: 60px; margin:0;">⚠️</h1>
-        <div id="msg-error" style="color:white; font-size: 20px; margin: 20px; font-weight: bold;"></div>
-        <button onclick="desbloquear()" style="background:#f1c40f; color:black; padding:20px; border:none; border-radius:10px; width:80%; font-weight:bold; font-size:18px;">CORREGIR</button>
+        <h1 style="color:white;font-size:60px;margin:0;">⚠️</h1>
+        <div id="msg-error" style="color:white;font-size:18px;margin:20px;font-weight:bold;word-break:break-all;"></div>
+        <button onclick="desbloquear()" style="background:#f1c40f;color:black;padding:18px;border:none;border-radius:10px;width:80%;font-weight:bold;font-size:18px;">✅ CORREGIR</button>
     </div>
 
+    <!-- MODAL LOTES -->
     <div id="modalLotes" class="modal">
-        <h2 style="color:#3498db; text-align:center;">REPORTES GUARDADOS</h2>
-        <div id="listaLotes" style="flex:1; overflow-y:auto;"></div>
-        <button onclick="cerrarModal('modalLotes')" style="background:#e74c3c; color:white; padding:15px; border:none; border-radius:10px; width:100%; margin-top:10px;">VOLVER</button>
+        <h2 style="color:var(--cm);text-align:center;margin-bottom:12px;">REPORTES GUARDADOS</h2>
+        <div id="listaLotes" style="flex:1;overflow-y:auto;"></div>
+        <button onclick="cerrarModal('modalLotes')" style="background:#e74c3c;color:white;padding:14px;border:none;border-radius:10px;width:100%;margin-top:10px;font-size:13px;">← VOLVER</button>
     </div>
 
-    <script>
-        let maestroMap = new Map();
-        let historialActual = JSON.parse(localStorage.getItem("p_act_v7")) || [];
-        let lotes = JSON.parse(localStorage.getItem("p_lotes_v7")) || [];
-        let totalEsperado = parseInt(localStorage.getItem("p_total_v7")) || 0;
-        let bloqueado = false;
-        let timerScanner = null;
-        const audio = new (window.AudioContext || window.webkitAudioContext)();
+    <!-- LOADING OVERLAY -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div id="loading-txt">Cargando...</div>
+    </div>
 
-        function beep(f, d) {
-            const o = audio.createOscillator(); const g = audio.createGain();
-            o.connect(g); g.connect(audio.destination);
-            o.frequency.value = f; g.gain.value = 0.05;
-            o.start(); o.stop(audio.currentTime + d);
+    <!-- TOAST -->
+    <div id="toast"></div>
+
+</div><!-- fin app-principal -->
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════
+//  CONSTANTES
+// ═══════════════════════════════════════════════════════
+const MAX_FILAS_DOM  = 60;   // máximo de filas que se renderizan en pantalla
+const SAVE_DEBOUNCE  = 1500; // ms entre guardados al localStorage
+const CHUNK_SIZE     = 500;  // filas a procesar por tick al cargar maestro
+
+// ═══════════════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════
+let modoActual = null; // 'comp' | 'inv'
+
+// — COMPARATIVO —
+let maestroMap    = new Map();
+let historial     = [];
+let lotes         = [];
+let totalEsp      = 0;
+
+// — INVENTARIO —
+let invHistorial  = [];
+let invLotes      = [];
+let invConteo     = new Map(); // código → cantidad
+
+// — CONTROL —
+let bloqueado     = false;
+let saveTimer     = null;   // debounce para localStorage
+let renderPending = false;  // evita renders duplicados
+
+// ═══════════════════════════════════════════════════════
+//  AUDIO
+// ═══════════════════════════════════════════════════════
+let audioCtx = null;
+function getAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+}
+function beep(freq, dur, type='square') {
+    try {
+        const ctx = getAudio();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = type;
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(0.06, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+        o.start(); o.stop(ctx.currentTime + dur);
+    } catch(e) {}
+}
+function beepOK()    { beep(1046, 0.07); }
+function beepError() { beep(220, 0.45, 'sawtooth'); }
+
+// ═══════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg, color='#2471a3') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.style.background = color; t.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.style.display='none', 2500);
+}
+
+// ═══════════════════════════════════════════════════════
+//  LOADING OVERLAY
+// ═══════════════════════════════════════════════════════
+function showLoading(msg) {
+    document.getElementById('loading-txt').textContent = msg;
+    document.getElementById('loading-overlay').style.display = 'flex';
+}
+function hideLoading() {
+    document.getElementById('loading-overlay').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+//  SELECTOR DE MODO
+// ═══════════════════════════════════════════════════════
+function seleccionarModo(modo) {
+    modoActual = modo;
+    document.getElementById('pantalla-modo').style.display = 'none';
+    document.getElementById('app-principal').classList.remove('hidden');
+
+    if (modo === 'comp') {
+        document.body.className = 'modo-comp';
+        document.getElementById('badge-txt').textContent = 'COMPARATIVO';
+        document.getElementById('btn-carga').style.display = 'block';
+        document.getElementById('vista-comp').classList.remove('hidden');
+        document.getElementById('vista-inv').classList.add('hidden');
+        document.getElementById('blq-esp').style.display  = '';
+        document.getElementById('blq-avan').style.display = '';
+        document.getElementById('blq-unic').classList.add('hidden');
+        document.getElementById('scanner').placeholder = 'ESCANEE CÓDIGO (13 DÍGITOS)';
+        loadStateComp();
+        renderComp();
+    } else {
+        document.body.className = 'modo-inv';
+        document.getElementById('badge-txt').textContent = 'INVENTARIO';
+        document.getElementById('btn-carga').style.display = 'none';
+        document.getElementById('vista-comp').classList.add('hidden');
+        document.getElementById('vista-inv').classList.remove('hidden');
+        document.getElementById('blq-esp').style.display  = 'none';
+        document.getElementById('blq-avan').style.display = 'none';
+        document.getElementById('blq-unic').classList.remove('hidden');
+        document.getElementById('scanner').placeholder = 'ESCANEE CUALQUIER CÓDIGO';
+        loadStateInv();
+        renderInv();
+    }
+    focusScanner();
+}
+
+function volverSelector() {
+    document.getElementById('pantalla-modo').style.display = 'flex';
+    document.getElementById('app-principal').classList.add('hidden');
+    modoActual = null;
+}
+
+// ═══════════════════════════════════════════════════════
+//  ESCÁNER BLUETOOTH — LÓGICA ROBUSTA
+//
+//  Las lectoras BT envían caracteres uno a uno como si
+//  fuera teclado, terminando con Enter (keyCode 13).
+//  Usamos keydown para capturar Enter y también un
+//  timeout de seguridad para cuando no hay Enter.
+//  Evitamos el evento "input" que puede dispararse
+//  varias veces en Android/iOS con BT.
+// ═══════════════════════════════════════════════════════
+const scannerEl = document.getElementById('scanner');
+let bufferBT    = '';   // buffer acumulador
+let flushTimer  = null; // timer de seguridad
+
+function flushBuffer() {
+    clearTimeout(flushTimer);
+    const cod = bufferBT.trim();
+    bufferBT = '';
+    scannerEl.value = '';
+    if (!cod) return;
+    procesarCodigo(cod);
+}
+
+// KEYDOWN: detecta Enter (fin de código en lectoras BT)
+scannerEl.addEventListener('keydown', function(e) {
+    if (bloqueado) { e.preventDefault(); return; }
+
+    if (e.key === 'Enter' || e.keyCode === 13) {
+        e.preventDefault();
+        // Tomar el valor actual del input + buffer acumulado
+        bufferBT = (scannerEl.value || '') + bufferBT.replace(scannerEl.value || '', '');
+        bufferBT = scannerEl.value.trim() || bufferBT.trim();
+        flushBuffer();
+        return;
+    }
+});
+
+// INPUT: acumula caracteres y programa flush de seguridad (80ms sin más input)
+scannerEl.addEventListener('input', function() {
+    if (bloqueado) { scannerEl.value=''; return; }
+    bufferBT = scannerEl.value;
+    clearTimeout(flushTimer);
+    // Flush automático si el código ya tiene ≥8 chars y pasaron 80ms sin más input
+    // Esto cubre lectoras que NO envían Enter
+    flushTimer = setTimeout(() => {
+        if (bufferBT.length >= 4) flushBuffer();
+        else { bufferBT=''; scannerEl.value=''; }
+    }, 80);
+});
+
+function procesarCodigo(cod) {
+    if (!cod || !modoActual) return;
+
+    if (modoActual === 'comp') {
+        if (cod.length === 13) {
+            historial.push(cod);
+            if (maestroMap.has(cod)) maestroMap.get(cod).real++;
+            else maestroMap.set(cod, { exp:0, real:1 });
+            schedSave('comp');
+            schedRender('comp', cod);
+            beepOK();
+        } else {
+            mostrarError(cod, 'COMP: Se esperan 13 dígitos');
+        }
+    } else {
+        if (cod.length >= 4) {
+            invHistorial.push(cod);
+            invConteo.set(cod, (invConteo.get(cod) || 0) + 1);
+            schedSave('inv');
+            schedRender('inv', cod);
+            beepOK();
+        } else {
+            mostrarError(cod, 'INV: Código muy corto');
+        }
+    }
+}
+
+function mostrarError(cod, detalle) {
+    bloqueado = true;
+    document.getElementById('msg-error').textContent =
+        `⛔ ${detalle}\n"${cod}" (${cod.length} car.)`;
+    document.getElementById('overlay-error').style.display = 'flex';
+    beepError();
+}
+
+// ═══════════════════════════════════════════════════════
+//  DEBOUNCE DE GUARDADO — evita serializar 19k ítems
+//  en cada scan; guarda como máximo cada SAVE_DEBOUNCE ms
+// ═══════════════════════════════════════════════════════
+function schedSave(modo) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        if (modo === 'comp') saveComp();
+        else saveInv();
+    }, SAVE_DEBOUNCE);
+}
+
+// Guardado inmediato (al guardar lote, al salir)
+function saveComp() {
+    try {
+        localStorage.setItem('p_maestro_v8', JSON.stringify(Object.fromEntries(maestroMap)));
+        localStorage.setItem('p_hist_v8',    JSON.stringify(historial));
+        localStorage.setItem('p_total_v8',   totalEsp);
+    } catch(e) { showToast('⚠️ Error al guardar (sin espacio)', '#e74c3c'); }
+}
+function saveInv() {
+    try {
+        localStorage.setItem('p_inv_hist_v8', JSON.stringify(invHistorial));
+    } catch(e) { showToast('⚠️ Error al guardar (sin espacio)', '#e74c3c'); }
+}
+function saveLotes() {
+    try {
+        localStorage.setItem('p_lotes_v8',     JSON.stringify(lotes));
+        localStorage.setItem('p_inv_lotes_v8', JSON.stringify(invLotes));
+    } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+//  CARGA DE ESTADO
+// ═══════════════════════════════════════════════════════
+function loadStateComp() {
+    historial    = JSON.parse(localStorage.getItem('p_hist_v8')    || '[]');
+    lotes        = JSON.parse(localStorage.getItem('p_lotes_v8')   || '[]');
+    totalEsp     = parseInt(localStorage.getItem('p_total_v8'))    || 0;
+    const m = localStorage.getItem('p_maestro_v8');
+    if (m) {
+        maestroMap = new Map(Object.entries(JSON.parse(m)));
+    }
+    // Re-sync por si el historial difiere del mapa
+    if (historial.length > 0 && maestroMap.size > 0) syncConteo();
+}
+
+function loadStateInv() {
+    invHistorial = JSON.parse(localStorage.getItem('p_inv_hist_v8')  || '[]');
+    invLotes     = JSON.parse(localStorage.getItem('p_inv_lotes_v8') || '[]');
+    // Reconstruir mapa de conteo desde historial
+    invConteo = new Map();
+    invHistorial.forEach(c => invConteo.set(c, (invConteo.get(c)||0)+1));
+}
+
+function syncConteo() {
+    maestroMap.forEach(v => v.real = 0);
+    historial.forEach(c => {
+        if (maestroMap.has(c)) maestroMap.get(c).real++;
+        else maestroMap.set(c, { exp:0, real:1 });
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+//  CARGA MAESTRO — por chunks para no bloquear UI
+// ═══════════════════════════════════════════════════════
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    const f = e.target.files[0];
+    if (!f) return;
+    const ext = f.name.split('.').pop().toLowerCase();
+    const reader = new FileReader();
+    showLoading('Leyendo archivo...');
+
+    reader.onload = function(evt) {
+        maestroMap.clear(); totalEsp = 0;
+
+        if (ext === 'xlsx' || ext === 'xls') {
+            // XLSX: parsear en worker simulado con setTimeout
+            setTimeout(() => {
+                try {
+                    showLoading('Procesando Excel...');
+                    const wb   = XLSX.read(new Uint8Array(evt.target.result), { type:'array', dense:true });
+                    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval:'' });
+                    procesarFilasMaestro(rows, 0);
+                } catch(err) {
+                    hideLoading();
+                    showToast('❌ Error leyendo Excel: ' + err.message, '#e74c3c');
+                }
+            }, 30);
+        } else {
+            setTimeout(() => {
+                showLoading('Procesando TXT/CSV...');
+                const lines = evt.target.result.split('\n');
+                const rows  = lines.map(line => {
+                    const p = line.split(/[;,|]/);
+                    return { _cod: (p[0]||'').trim(), _stock: parseInt(p[1])||0 };
+                }).filter(r => r._cod.length >= 4);
+                procesarFilasMaestro(rows, 0, true);
+            }, 30);
+        }
+    };
+
+    if (ext === 'xlsx' || ext === 'xls') reader.readAsArrayBuffer(f);
+    else reader.readAsText(f);
+    e.target.value = ''; // reset para permitir recargar mismo archivo
+});
+
+function procesarFilasMaestro(rows, offset, isTxt=false) {
+    const end = Math.min(offset + CHUNK_SIZE, rows.length);
+
+    for (let i = offset; i < end; i++) {
+        const row = rows[i];
+        let cod, stock;
+
+        if (isTxt) {
+            cod   = row._cod;
+            stock = row._stock;
+        } else {
+            // Excel: intentar detectar columna de código y stock
+            const vals = Object.values(row);
+            cod   = String(row.codigo || row.CODIGO || row.Codigo ||
+                           row.code   || row.CODE   || vals[0] || '').trim();
+            stock = parseInt(row.stock || row.STOCK || row.cantidad ||
+                             row.CANTIDAD || row.qty || vals[1]) || 0;
         }
 
-        function toggleMenu() { document.getElementById("menuContent").style.display = (document.getElementById("menuContent").style.display === "block") ? "none" : "block"; }
+        if (cod && cod.length >= 4 && cod !== 'undefined') {
+            maestroMap.set(cod, { exp: stock, real: 0 });
+            totalEsp += stock;
+        }
+    }
 
-        // CARGA DE MAESTRO
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const f = e.target.files[0];
-            const reader = new FileReader();
-            const ext = f.name.split('.').pop().toLowerCase();
+    if (end < rows.length) {
+        const pct = Math.round((end / rows.length) * 100);
+        showLoading(`Cargando maestro... ${pct}% (${end.toLocaleString()} / ${rows.length.toLocaleString()})`);
+        setTimeout(() => procesarFilasMaestro(rows, end, isTxt), 0);
+    } else {
+        // Terminó — sincronizar conteos existentes y guardar
+        if (historial.length > 0) syncConteo();
+        localStorage.setItem('p_total_v8', totalEsp);
+        saveComp();
+        hideLoading();
+        toggleMenu();
+        beep(880, 0.1);
+        showToast(`✅ Maestro cargado: ${maestroMap.size.toLocaleString()} códigos`, '#1e8449');
+        renderComp();
+        focusScanner();
+    }
+}
 
-            reader.onload = function(evt) {
-                maestroMap.clear();
-                totalEsperado = 0;
-                if (ext.includes('xl')) {
-                    const wb = XLSX.read(new Uint8Array(evt.target.result), {type: 'array'});
-                    const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                    json.forEach(row => {
-                        let c = String(row.codigo || row.CODIGO || Object.values(row)[0]).trim();
-                        let s = parseInt(row.stock || row.cantidad || Object.values(row)[1]) || 0;
-                        if(c.length >= 8) { maestroMap.set(c, { exp: s, real: 0 }); totalEsperado += s; }
-                    });
-                } else {
-                    evt.target.result.split('\n').forEach(line => {
-                        const p = line.split(/[;,|]/);
-                        if(p[0]) { 
-                            let c = p[0].trim();
-                            let s = parseInt(p[1]) || 0;
-                            maestroMap.set(c, { exp: s, real: 0 }); 
-                            totalEsperado += s; 
-                        }
-                    });
-                }
-                localStorage.setItem("p_total_v7", totalEsperado);
-                syncConteo();
-                saveState();
-                actualizarInterfaz();
-                toggleMenu();
-                beep(800, 0.1);
-            };
-            if (ext.includes('xl')) reader.readAsArrayBuffer(f); else reader.readAsText(f);
+// ═══════════════════════════════════════════════════════
+//  RENDER CON requestAnimationFrame — sin bloquear UI
+//  Solo renderiza MAX_FILAS_DOM filas (virtual scroll simple)
+// ═══════════════════════════════════════════════════════
+let lastRenderCodComp = null;
+let lastRenderCodInv  = null;
+
+function schedRender(modo, cod=null) {
+    if (modo === 'comp') lastRenderCodComp = cod;
+    else lastRenderCodInv = cod;
+
+    if (renderPending) return;
+    renderPending = true;
+    requestAnimationFrame(() => {
+        renderPending = false;
+        if (modo === 'comp') renderComp(lastRenderCodComp);
+        else renderInv(lastRenderCodInv);
+    });
+}
+
+function renderComp(ultimoCod=null) {
+    const cont = historial.length;
+    document.getElementById('stat-esp').textContent  = totalEsp.toLocaleString();
+    document.getElementById('stat-cont').textContent = cont.toLocaleString();
+    const p = totalEsp > 0 ? Math.min(Math.round((cont/totalEsp)*100), 100) : 0;
+    document.getElementById('stat-avan').textContent = p + '%';
+    document.getElementById('bar-fill').style.width  = p + '%';
+
+    // — Flujo de lectura: últimas 30 —
+    const frag1 = document.createDocumentFragment();
+    const ultimas = historial.slice(-30).reverse();
+    ultimas.forEach((c, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${historial.length - i}</td><td>${c}</td>`;
+        frag1.appendChild(tr);
+    });
+    const tL = document.getElementById('t-lectura');
+    tL.innerHTML = '';
+    tL.appendChild(frag1);
+
+    // — Maestro: mostrar cod actual primero, luego activos, luego hasta MAX_FILAS_DOM —
+    const frag2 = document.createDocumentFragment();
+    let count = 0;
+
+    // 1) El código recién leído va primero (resaltado)
+    if (ultimoCod && maestroMap.has(ultimoCod)) {
+        frag2.appendChild(crearFilaComp(ultimoCod, maestroMap.get(ultimoCod), true));
+        count++;
+    }
+
+    // 2) Primero los que tienen discrepancia (real > 0 y ≠ exp)
+    for (const [k, v] of maestroMap) {
+        if (k === ultimoCod) continue;
+        if (count >= MAX_FILAS_DOM) break;
+        if (v.real > 0 && v.real !== v.exp) {
+            frag2.appendChild(crearFilaComp(k, v));
+            count++;
+        }
+    }
+
+    // 3) Luego los OK (leídos correctamente)
+    for (const [k, v] of maestroMap) {
+        if (k === ultimoCod) continue;
+        if (count >= MAX_FILAS_DOM) break;
+        if (v.real > 0 && v.real === v.exp) {
+            frag2.appendChild(crearFilaComp(k, v));
+            count++;
+        }
+    }
+
+    // 4) Rellena con los primeros del maestro (para ver la lista)
+    for (const [k, v] of maestroMap) {
+        if (k === ultimoCod) continue;
+        if (count >= MAX_FILAS_DOM) break;
+        if (v.real === 0) {
+            frag2.appendChild(crearFilaComp(k, v));
+            count++;
+        }
+    }
+
+    const tM = document.getElementById('t-maestro');
+    tM.innerHTML = '';
+    tM.appendChild(frag2);
+}
+
+function crearFilaComp(k, v, resaltar=false) {
+    const tr = document.createElement('tr');
+    const cls = (v.real === v.exp && v.exp > 0) ? 'match' : (v.real > v.exp ? 'sobrante' : 'falta');
+    tr.className = cls + (resaltar ? ' resaltar' : '');
+    tr.innerHTML = `<td>${k}</td><td>${v.exp}</td><td>${v.real}</td>`;
+    return tr;
+}
+
+function renderInv(ultimoCod=null) {
+    const cont   = invHistorial.length;
+    const unicos = invConteo.size;
+    document.getElementById('stat-cont').textContent = cont.toLocaleString();
+    document.getElementById('stat-unic').textContent = unicos.toLocaleString();
+    document.getElementById('bar-fill').style.width  = '100%';
+
+    // — Flujo de lectura —
+    const frag1 = document.createDocumentFragment();
+    invHistorial.slice(-30).reverse().forEach((c,i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${invHistorial.length-i}</td><td>${c}</td>`;
+        frag1.appendChild(tr);
+    });
+    const tL = document.getElementById('t-lect-inv');
+    tL.innerHTML = ''; tL.appendChild(frag1);
+
+    // — Conteo: cod actual primero, luego ordenado por cantidad desc —
+    const frag2 = document.createDocumentFragment();
+    let count = 0;
+
+    if (ultimoCod && invConteo.has(ultimoCod)) {
+        const tr = document.createElement('tr');
+        tr.className = 'match';
+        tr.innerHTML = `<td>${ultimoCod}</td><td>${invConteo.get(ultimoCod)}</td>`;
+        frag2.appendChild(tr);
+        count++;
+    }
+
+    // Ordenar por cantidad desc (solo los primeros MAX_FILAS_DOM)
+    const sorted = [...invConteo.entries()].sort((a,b) => b[1]-a[1]);
+    for (const [k,v] of sorted) {
+        if (k === ultimoCod) continue;
+        if (count >= MAX_FILAS_DOM) break;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${k}</td><td>${v}</td>`;
+        frag2.appendChild(tr);
+        count++;
+    }
+
+    const tI = document.getElementById('t-inv');
+    tI.innerHTML = ''; tI.appendChild(frag2);
+}
+
+// ═══════════════════════════════════════════════════════
+//  GUARDAR LOTE
+// ═══════════════════════════════════════════════════════
+function guardarLote() {
+    if (modoActual === 'inv') return guardarLoteInv();
+
+    if (historial.length === 0) { showToast('Nada que guardar', '#e74c3c'); toggleMenu(); return; }
+    const n = prompt('Nombre del reporte:', 'AUDITORIA ' + (lotes.length+1));
+    if (!n) return;
+
+    // Guardar snapshot de maestro en el momento del cierre
+    lotes.push({
+        nombre: n,
+        fecha: new Date().toLocaleString(),
+        tipo: 'comp',
+        datosLectura: [...historial],
+        maestroSnapshot: Object.fromEntries(maestroMap)
+    });
+    historial = [];
+    maestroMap.forEach(v => v.real = 0);
+    saveComp(); saveLotes();
+    renderComp(); toggleMenu();
+    showToast('✅ Reporte guardado', '#1e8449');
+}
+
+function guardarLoteInv() {
+    if (invHistorial.length === 0) { showToast('Nada que guardar', '#e74c3c'); toggleMenu(); return; }
+    const n = prompt('Nombre del inventario:', 'INVENTARIO ' + (invLotes.length+1));
+    if (!n) return;
+
+    invLotes.push({
+        nombre: n,
+        fecha: new Date().toLocaleString(),
+        tipo: 'inv',
+        datosLectura: [...invHistorial]
+    });
+    invHistorial = []; invConteo = new Map();
+    saveInv(); saveLotes();
+    renderInv(); toggleMenu();
+    showToast('✅ Inventario guardado', '#1e8449');
+}
+
+// ═══════════════════════════════════════════════════════
+//  EXPORTAR EXCEL — COMPARATIVO
+// ═══════════════════════════════════════════════════════
+function exportarExcel(idx) {
+    const lote = lotes[idx];
+    const conteoAgr = {};
+    lote.datosLectura.forEach(c => { conteoAgr[c] = (conteoAgr[c]||0)+1; });
+
+    const concilia = [];
+
+    Object.entries(lote.maestroSnapshot).forEach(([cod,v]) => {
+        const leido = conteoAgr[cod] || 0;
+        const diff  = leido - v.exp;
+        const est   = diff < 0 ? 'FALTA' : diff > 0 ? 'SOBRA' : 'OK';
+        concilia.push({
+            'A - COD_MAESTRO':    cod,
+            'B - COD_LECTURA':    leido > 0 ? cod : '',
+            'C - STOCK_ESPERADO': v.exp,
+            'D - CONTEO_REAL':    leido,
+            'E - ESTADO':         est,
+            'F - DIFERENCIA':     Math.abs(diff)
         });
+    });
 
-        function syncConteo() {
-            maestroMap.forEach(v => v.real = 0);
-            historialActual.forEach(c => {
-                if(maestroMap.has(c)) maestroMap.get(c).real++;
-                else maestroMap.set(c, { exp: 0, real: 1 });
-            });
+    // Sobrantes puros (no estaban en maestro)
+    Object.entries(conteoAgr).forEach(([cod,cant]) => {
+        if (!lote.maestroSnapshot.hasOwnProperty(cod)) {
+            concilia.push({ 'A - COD_MAESTRO':'', 'B - COD_LECTURA':cod, 'C - STOCK_ESPERADO':0, 'D - CONTEO_REAL':cant, 'E - ESTADO':'SOBRA', 'F - DIFERENCIA':cant });
         }
+    });
 
-        function saveState() {
-            localStorage.setItem("p_maestro_v7", JSON.stringify(Object.fromEntries(maestroMap)));
-            localStorage.setItem("p_act_v7", JSON.stringify(historialActual));
-        }
+    const agrupado = Object.entries(conteoAgr).map(([cod,cant]) => ({ CODIGO:cod, CANTIDAD_TOTAL:cant }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(concilia),  'CONCILIACION');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(agrupado),  'LECTURAS_CONSOLIDADAS');
+    XLSX.writeFile(wb, `${lote.nombre}_CONCILIADO.xlsx`);
+}
 
-        function loadState() {
-            const m = localStorage.getItem("p_maestro_v7");
-            if (m) {
-                maestroMap = new Map(Object.entries(JSON.parse(m)));
-                syncConteo();
-            }
-        }
+// ═══════════════════════════════════════════════════════
+//  EXPORTAR EXCEL — INVENTARIO
+// ═══════════════════════════════════════════════════════
+function exportarExcelInv(idx) {
+    const lote = invLotes[idx];
+    const conteo = {};
+    lote.datosLectura.forEach(c => { conteo[c] = (conteo[c]||0)+1; });
 
-        // ESCÁNER
-        document.getElementById("scanner").addEventListener("input", function() {
-            if (bloqueado) return;
-            clearTimeout(timerScanner);
-            timerScanner = setTimeout(() => {
-                let cod = this.value.trim();
-                if (!cod) return;
-                if (cod.length === 13) {
-                    historialActual.push(cod);
-                    if(maestroMap.has(cod)) maestroMap.get(cod).real++;
-                    else maestroMap.set(cod, { exp: 0, real: 1 });
-                    saveState();
-                    actualizarInterfaz(cod);
-                    beep(1000, 0.08);
-                } else {
-                    bloqueado = true;
-                    document.getElementById("msg-error").innerText = "ERROR: " + cod.length + " DÍGITOS (" + cod + ")";
-                    document.getElementById("overlay-error").style.display = "flex";
-                    beep(200, 0.5);
-                }
-                this.value = "";
-            }, 40);
+    const filas = Object.entries(conteo)
+        .sort((a,b) => b[1]-a[1])
+        .map(([cod,cant]) => ({ CODIGO:cod, CANTIDAD:cant }));
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), 'INVENTARIO');
+    XLSX.writeFile(wb, `${lote.nombre}_INVENTARIO.xlsx`);
+}
+
+// ═══════════════════════════════════════════════════════
+//  EXPORTAR TXT
+// ═══════════════════════════════════════════════════════
+function exportarTxt(idx) {
+    const lote = lotes[idx];
+    const c = {};
+    lote.datosLectura.forEach(cod => { c[cod]=(c[cod]||0)+1; });
+    const txt = Object.entries(c).map(([k,v])=>`${k}|${v}`).join('\n');
+    descargar(txt, `${lote.nombre}_CONSOLIDADO.txt`);
+}
+function exportarTxtInv(idx) {
+    const lote = invLotes[idx];
+    const c = {};
+    lote.datosLectura.forEach(cod => { c[cod]=(c[cod]||0)+1; });
+    const txt = Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}|${v}`).join('\n');
+    descargar(txt, `${lote.nombre}_INVENTARIO.txt`);
+}
+function descargar(texto, nombre) {
+    const b = new Blob([texto],{type:'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b); a.download = nombre; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+
+// ═══════════════════════════════════════════════════════
+//  REANUDAR LOTE
+// ═══════════════════════════════════════════════════════
+function reanudarLote(idx) {
+    showLoading('Reanudando...');
+    const lote = lotes[idx];
+    setTimeout(() => {
+        lote.datosLectura.forEach(c => {
+            historial.push(c);
+            if (maestroMap.has(c)) maestroMap.get(c).real++;
+            else maestroMap.set(c, {exp:0,real:1});
         });
+        lotes.splice(idx,1);
+        saveLotes(); saveComp();
+        hideLoading(); cerrarModal('modalLotes'); renderComp();
+    }, 30);
+}
 
-        function actualizarInterfaz(ultimoCod = null) {
-            const cont = historialActual.length;
-            document.getElementById("stat-esperado").innerText = totalEsperado;
-            document.getElementById("stat-contado").innerText = cont;
-            let p = totalEsperado > 0 ? Math.round((cont/totalEsperado)*100) : 0;
-            document.getElementById("stat-avance").innerText = p + "%";
-            document.getElementById("bar-fill").style.width = Math.min(p, 100) + "%";
+function reanudarLoteInv(idx) {
+    const lote = invLotes[idx];
+    lote.datosLectura.forEach(c => {
+        invHistorial.push(c);
+        invConteo.set(c, (invConteo.get(c)||0)+1);
+    });
+    invLotes.splice(idx,1);
+    saveLotes(); saveInv(); cerrarModal('modalLotes'); renderInv();
+}
 
-            const tL = document.getElementById("t-lectura");
-            tL.innerHTML = "";
-            historialActual.slice(-20).reverse().forEach((c, i) => {
-                tL.innerHTML += `<tr><td>${historialActual.length - i}</td><td>${c}</td></tr>`;
-            });
+// ═══════════════════════════════════════════════════════
+//  MODAL LOTES
+// ═══════════════════════════════════════════════════════
+function renderLotes() {
+    const d = document.getElementById('listaLotes');
+    d.innerHTML = '';
 
-            const tM = document.getElementById("t-maestro");
-            tM.innerHTML = "";
-            let limit = 0;
-            if(ultimoCod && maestroMap.has(ultimoCod)) renderFila(tM, ultimoCod, maestroMap.get(ultimoCod), true);
-            for (let [k, v] of maestroMap) {
-                if(k === ultimoCod) continue;
-                if(v.real > 0 || limit < 40) { renderFila(tM, k, v); limit++; }
-            }
-        }
+    if (modoActual === 'comp') {
+        if (!lotes.length) { d.innerHTML='<p style="color:#888;text-align:center;margin-top:50px;">Sin reportes guardados</p>'; return; }
+        lotes.forEach((l,i) => {
+            const div = document.createElement('div');
+            div.className = 'card-lote';
+            div.innerHTML = `<strong style="color:var(--cm)">${l.nombre}</strong><br>
+                <small>${l.fecha} | ${l.datosLectura.length.toLocaleString()} unid.</small><br><br>
+                <button onclick="reanudarLote(${i})"  style="background:#3498db;color:white;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">REANUDAR</button>
+                <button onclick="exportarExcel(${i})" style="background:#2ecc71;color:black;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">EXCEL</button>
+                <button onclick="exportarTxt(${i})"   style="background:#2ecc71;color:black;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">TXT</button>
+                <button onclick="eliminarLote(${i})"  style="background:#e74c3c;color:white;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">BORRAR</button>`;
+            d.appendChild(div);
+        });
+    } else {
+        if (!invLotes.length) { d.innerHTML='<p style="color:#888;text-align:center;margin-top:50px;">Sin inventarios guardados</p>'; return; }
+        invLotes.forEach((l,i) => {
+            const uniq = new Set(l.datosLectura).size;
+            const div  = document.createElement('div');
+            div.className = 'card-lote';
+            div.style.borderLeftColor = '#1e8449';
+            div.innerHTML = `<strong style="color:#2ecc71">${l.nombre}</strong><br>
+                <small>${l.fecha} | ${l.datosLectura.length.toLocaleString()} unid. | ${uniq} únicos</small><br><br>
+                <button onclick="reanudarLoteInv(${i})"  style="background:#1e8449;color:white;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">REANUDAR</button>
+                <button onclick="exportarExcelInv(${i})" style="background:#2ecc71;color:black;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">EXCEL</button>
+                <button onclick="exportarTxtInv(${i})"   style="background:#2ecc71;color:black;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">TXT</button>
+                <button onclick="eliminarLoteInv(${i})"  style="background:#e74c3c;color:white;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">BORRAR</button>`;
+            d.appendChild(div);
+        });
+    }
+}
 
-        function renderFila(t, k, v, h = false) {
-            let s = (v.real === v.exp && v.exp > 0) ? "match" : (v.real > v.exp ? "sobrante" : "falta");
-            t.innerHTML += `<tr class="${s} ${h?'highlight':''}"><td>${k}</td><td>${v.exp}</td><td>${v.real}</td></tr>`;
-        }
+function eliminarLote(i)    { if(confirm('¿Eliminar reporte?'))    { lotes.splice(i,1);    saveLotes(); renderLotes(); } }
+function eliminarLoteInv(i) { if(confirm('¿Eliminar inventario?')) { invLotes.splice(i,1); saveLotes(); renderLotes(); } }
 
-        function guardarLoteActual() {
-            if (historialActual.length === 0) return alert("Nada que guardar.");
-            let n = prompt("Nombre Reporte:", "AUDITORIA " + (lotes.length + 1));
-            if (!n) return;
-            
-            lotes.push({ 
-                nombre: n, 
-                fecha: new Date().toLocaleString(), 
-                datosLectura: [...historialActual],
-                maestroSnapshot: Object.fromEntries(maestroMap)
-            });
-            localStorage.setItem("p_lotes_v7", JSON.stringify(lotes));
-            
-            historialActual = [];
-            maestroMap.forEach(v => v.real = 0);
-            saveState();
-            actualizarInterfaz();
-            toggleMenu();
-        }
+// ═══════════════════════════════════════════════════════
+//  UTILIDADES
+// ═══════════════════════════════════════════════════════
+function toggleMenu() {
+    const m = document.getElementById('menuContent');
+    m.style.display = m.style.display === 'block' ? 'none' : 'block';
+}
+function abrirModal(id) {
+    document.getElementById(id).style.display = 'flex';
+    if (id === 'modalLotes') renderLotes();
+    toggleMenu();
+}
+function cerrarModal(id) {
+    document.getElementById(id).style.display = 'none';
+    focusScanner();
+}
+function desbloquear() {
+    bloqueado = false;
+    document.getElementById('overlay-error').style.display = 'none';
+    focusScanner();
+}
+function resetearApp() {
+    if (confirm('¿BORRAR TODO? (comparativo e inventario)')) {
+        // Limpiar solo las claves de esta app
+        ['p_maestro_v8','p_hist_v8','p_total_v8','p_lotes_v8','p_inv_hist_v8','p_inv_lotes_v8'].forEach(k => localStorage.removeItem(k));
+        location.reload();
+    }
+}
+function focusScanner() {
+    setTimeout(() => { try { document.getElementById('scanner').focus(); } catch(e){} }, 80);
+}
 
-        // EXPORTACIÓN ACTUALIZADA
-        function exportarExcel(idx) {
-            const lote = lotes[idx];
+// Mantener foco en scanner al tocar fuera de elementos interactivos
+document.addEventListener('click', (e) => {
+    const tag = e.target.tagName;
+    if (!bloqueado && modoActual && tag !== 'BUTTON' && tag !== 'INPUT' && tag !== 'SELECT') {
+        focusScanner();
+    }
+});
 
-            // Agrupar lecturas por código para obtener el conteo real por código
-            const conteoAgrupado = {};
-            lote.datosLectura.forEach(cod => {
-                conteoAgrupado[cod] = (conteoAgrupado[cod] || 0) + 1;
-            });
-
-            // HOJA 1: CONCILIACIÓN con las 6 columnas exactas
-            const concilia = [];
-
-            // Códigos del maestro
-            Object.entries(lote.maestroSnapshot).forEach(([cod, v]) => {
-                const cantLeida = conteoAgrupado[cod] || 0;
-                const diff = cantLeida - v.exp;
-                let estado = "OK";
-                if (diff < 0) estado = "FALTA";
-                else if (diff > 0) estado = "SOBRA";
-                concilia.push({
-                    "A - COD_MAESTRO": cod,
-                    "B - COD_LECTURA": cantLeida > 0 ? cod : "",
-                    "C - STOCK_ESPERADO": v.exp,
-                    "D - CONTEO_REAL": cantLeida,
-                    "E - ESTADO": estado,
-                    "F - DIFERENCIA": Math.abs(diff)
-                });
-            });
-
-            // Códigos leídos que NO están en el maestro (sobrantes puros)
-            Object.entries(conteoAgrupado).forEach(([cod, cant]) => {
-                if (!lote.maestroSnapshot.hasOwnProperty(cod)) {
-                    concilia.push({
-                        "A - COD_MAESTRO": "",
-                        "B - COD_LECTURA": cod,
-                        "C - STOCK_ESPERADO": 0,
-                        "D - CONTEO_REAL": cant,
-                        "E - ESTADO": "SOBRA",
-                        "F - DIFERENCIA": cant
-                    });
-                }
-            });
-
-            // HOJA 2: LECTURAS CONSOLIDADAS (Agrupadas por código)
-            const datosAgrupados = Object.entries(conteoAgrupado).map(([cod, cant]) => ({
-                CODIGO: cod,
-                CANTIDAD_TOTAL: cant
-            }));
-
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(concilia), "CONCILIACION");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(datosAgrupados), "LECTURAS_CONSOLIDADAS");
-            XLSX.writeFile(wb, `${lote.nombre}_CONCILIADO.xlsx`);
-        }
-
-        function exportarTxt(idx) {
-            const lote = lotes[idx];
-            
-            // Consolidar lecturas para el TXT
-            const conteoAgrupado = {};
-            lote.datosLectura.forEach(cod => {
-                conteoAgrupado[cod] = (conteoAgrupado[cod] || 0) + 1;
-            });
-
-            // Generar TXT sin encabezados: CODIGO|CANTIDAD
-            let txt = "";
-            Object.entries(conteoAgrupado).forEach(([cod, cant]) => {
-                txt += `${cod}|${cant}\n`;
-            });
-
-            const b = new Blob([txt], {type:"text/plain"});
-            const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `${lote.nombre}_CONSOLIDADO.txt`; a.click();
-        }
-
-        function reanudarLote(idx) {
-            const lote = lotes[idx];
-            lote.datosLectura.forEach(c => {
-                historialActual.push(c);
-                if(maestroMap.has(c)) maestroMap.get(c).real++;
-                else maestroMap.set(c, { exp: 0, real: 1 });
-            });
-            lotes.splice(idx, 1);
-            localStorage.setItem("p_lotes_v7", JSON.stringify(lotes));
-            saveState();
-            cerrarModal('modalLotes');
-            actualizarInterfaz();
-        }
-
-        function abrirModal(id) { document.getElementById(id).style.display = "flex"; if(id === 'modalLotes') renderLotes(); toggleMenu(); }
-        function cerrarModal(id) { document.getElementById(id).style.display = "none"; document.getElementById("scanner").focus(); }
-        
-        function renderLotes() {
-            const d = document.getElementById("listaLotes");
-            d.innerHTML = "";
-            lotes.forEach((l, i) => {
-                d.innerHTML += `<div class="card-lote">
-                    <strong style="color:#3498db">${l.nombre}</strong><br><small>${l.fecha} | ${l.datosLectura.length} Unid.</small><br><br>
-                    <button onclick="reanudarLote(${i})" style="background:#3498db; color:white; border:none; padding:8px; border-radius:5px; font-size:10px;">REANUDAR</button>
-                    <button onclick="exportarExcel(${i})" style="background:#2ecc71; color:black; border:none; padding:8px; border-radius:5px; font-size:10px;">EXCEL COMPLETO</button>
-                    <button onclick="exportarTxt(${i})" style="background:#2ecc71; color:black; border:none; padding:8px; border-radius:5px; font-size:10px;">TXT CONSOLIDADO</button>
-                    <button onclick="eliminarLote(${i})" style="background:#e74c3c; color:white; border:none; padding:8px; border-radius:5px; font-size:10px;">BORRAR</button>
-                </div>`;
-            });
-        }
-
-        function eliminarLote(i) { if(confirm("¿Eliminar?")) { lotes.splice(i, 1); localStorage.setItem("p_lotes_v7", JSON.stringify(lotes)); renderLotes(); } }
-        function desbloquear() { bloqueado = false; document.getElementById("overlay-error").style.display = "none"; document.getElementById("scanner").focus(); }
-        function resetearApp() { if(confirm("¿BORRAR TODO?")) { localStorage.clear(); location.reload(); } }
-
-        loadState();
-        actualizarInterfaz();
-        document.addEventListener("click", () => { if(!bloqueado) document.getElementById("scanner").focus(); });
-    </script>
+// Guardar estado antes de cerrar pestaña
+window.addEventListener('beforeunload', () => {
+    clearTimeout(saveTimer);
+    if (modoActual === 'comp') saveComp();
+    else if (modoActual === 'inv') saveInv();
+});
+</script>
 </body>
 </html>
