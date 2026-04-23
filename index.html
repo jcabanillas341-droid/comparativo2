@@ -2,20 +2,20 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Pieers Validador Maestro - Máximo Rendimiento</title>
+    <title>Pieers Auditor PRO - Consolidado</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         * { font-family: 'Arial Black', sans-serif; box-sizing: border-box; }
         body { background: #121212; color: #e0e0e0; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* CABECERA Y MENÚ ESTILO ORIGINAL */
+        /* CABECERA */
         .header-app { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #1e1e1e; border-bottom: 3px solid #3498db; }
         .btn-menu { background: #3498db; color: white; border: none; padding: 10px; border-radius: 5px; font-size: 11px; cursor: pointer; }
         
         .menu-dropdown { 
             display: none; position: absolute; right: 10px; top: 55px; background: #1e1e1e; 
-            z-index: 5000; border: 1px solid #333; border-radius: 8px; min-width: 250px;
+            z-index: 5000; border: 1px solid #333; border-radius: 8px; min-width: 280px;
         }
         .menu-dropdown button { 
             width: 100%; padding: 15px; background: none; border: none; color: white; 
@@ -27,7 +27,7 @@
             border-radius: 10px; border: 4px solid #3498db; text-align: center; background: #fff; color: #333;
         }
 
-        /* BARRA DE PROGRESO Y TOTALES */
+        /* PROGRESO */
         .progress-box { background: #1e1e1e; padding: 10px; margin: 0 10px 10px; border-radius: 8px; border: 1px solid #333; }
         .stats-grid { display: flex; justify-content: space-between; margin-bottom: 5px; }
         .stat-val { display: block; font-size: 22px; color: #2ecc71; text-align: center; }
@@ -35,24 +35,20 @@
         .bar-bg { background: #333; height: 14px; border-radius: 7px; overflow: hidden; margin-top: 5px; }
         #bar-fill { background: #2ecc71; height: 100%; width: 0%; transition: width 0.3s; }
 
-        /* PANTALLA DIVIDIDA (SPLIT-VIEW) */
+        /* VISTA DIVIDIDA */
         .split-view { display: flex; flex: 1; gap: 6px; overflow: hidden; padding: 0 10px 10px; }
         .panel { flex: 1; display: flex; flex-direction: column; background: #1a1a1a; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
         .panel-h { background: #2c3e50; padding: 10px; font-size: 10px; text-align: center; color: #3498db; }
 
-        /* LISTAS OPTIMIZADAS */
         .scroll { flex: 1; overflow-y: auto; background: white; }
         table { width: 100%; border-collapse: collapse; color: #333; table-layout: fixed; }
         th { background: #444; color: white; padding: 6px; font-size: 9px; position: sticky; top: 0; z-index: 10; }
         td { padding: 12px 4px; border: 1px solid #eee; text-align: center; font-size: 12px; font-weight: bold; }
 
-        /* COLORES DE ESTADO */
         .match { background: #d4edda !important; color: #155724; }
         .falta { background: #fff3cd !important; color: #856404; }
         .sobrante { background: #f8d7da !important; color: #721c24; }
-        .highlight { border: 3px solid #f1c40f !important; }
-
-        /* BLOQUEO POR ERROR (13 DÍGITOS) */
+        
         #overlay-error { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(231, 76, 60, 0.96); z-index: 9999; flex-direction: column; 
@@ -67,18 +63,18 @@
 <body>
 
     <div class="header-app">
-        <div style="font-size: 14px; color: #3498db;">PIEERS VALIDADOR PRO</div>
-        <button class="btn-menu" onclick="toggleMenu()">☰ MENÚ OPCIONES</button>
+        <div style="font-size: 14px; color: #3498db;">PIEERS AUDITOR PRO</div>
+        <button class="btn-menu" onclick="toggleMenu()">☰ OPCIONES</button>
         <div id="menuContent" class="menu-dropdown">
-            <button onclick="document.getElementById('fileInput').click()">📥 CARGAR MAESTRO (EXCEL/TXT)</button>
-            <button onclick="guardarLoteActual()">💾 GUARDAR LOTE ACTUAL</button>
-            <button onclick="abrirModal('modalLotes')">📂 LOTES GUARDADOS / REANUDAR</button>
+            <button onclick="document.getElementById('fileInput').click()">📥 CARGAR MAESTRO (EXCEL o TXT)</button>
+            <button onclick="guardarLoteActual()">💾 GUARDAR AUDITORÍA ACTUAL</button>
+            <button onclick="abrirModal('modalLotes')">📂 LOTES GUARDADOS / REPORTES</button>
             <button onclick="resetearApp()" style="color:#e74c3c">🗑️ RESETEAR TODO</button>
         </div>
     </div>
 
     <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .txt, .csv">
-    <input id="scanner" inputmode="none" autofocus placeholder="ESCANEE CÓDIGO" autocomplete="off">
+    <input id="scanner" inputmode="none" autofocus placeholder="ESCANEE CÓDIGO (13 DÍGITOS)" autocomplete="off">
 
     <div class="progress-box">
         <div class="stats-grid">
@@ -88,7 +84,7 @@
             </div>
             <div style="flex:1; border-left: 1px solid #333; border-right: 1px solid #333;">
                 <span id="stat-contado" class="stat-val">0</span>
-                <span class="stat-lab">Total Contado</span>
+                <span class="stat-lab">Conteo Real</span>
             </div>
             <div style="flex:1">
                 <span id="stat-avance" class="stat-val">0%</span>
@@ -124,21 +120,20 @@
     <div id="overlay-error">
         <h1 style="color:white; font-size: 60px; margin:0;">⚠️</h1>
         <div id="msg-error" style="color:white; font-size: 20px; margin: 20px; font-weight: bold;"></div>
-        <button onclick="desbloquear()" style="background:#f1c40f; color:black; padding:20px; border:none; border-radius:10px; width:80%; font-weight:bold; font-size:18px;">CORREGIR LECTURA</button>
+        <button onclick="desbloquear()" style="background:#f1c40f; color:black; padding:20px; border:none; border-radius:10px; width:80%; font-weight:bold; font-size:18px;">CORREGIR</button>
     </div>
 
     <div id="modalLotes" class="modal">
-        <h2 style="color:#3498db; text-align:center;">LOTES EN MEMORIA</h2>
+        <h2 style="color:#3498db; text-align:center;">REPORTES GUARDADOS</h2>
         <div id="listaLotes" style="flex:1; overflow-y:auto;"></div>
         <button onclick="cerrarModal('modalLotes')" style="background:#e74c3c; color:white; padding:15px; border:none; border-radius:10px; width:100%; margin-top:10px;">VOLVER</button>
     </div>
 
     <script>
-        // Motor de búsqueda ultra rápido
         let maestroMap = new Map();
-        let historialActual = JSON.parse(localStorage.getItem("pieers_act")) || [];
-        let lotes = JSON.parse(localStorage.getItem("pieers_lotes")) || [];
-        let totalEsperado = parseInt(localStorage.getItem("pieers_total_exp")) || 0;
+        let historialActual = JSON.parse(localStorage.getItem("p_act_v7")) || [];
+        let lotes = JSON.parse(localStorage.getItem("p_lotes_v7")) || [];
+        let totalEsperado = parseInt(localStorage.getItem("p_total_v7")) || 0;
         let bloqueado = false;
         let timerScanner = null;
         const audio = new (window.AudioContext || window.webkitAudioContext)();
@@ -152,7 +147,7 @@
 
         function toggleMenu() { document.getElementById("menuContent").style.display = (document.getElementById("menuContent").style.display === "block") ? "none" : "block"; }
 
-        // CARGA DE MAESTRO PERSISTENTE
+        // CARGA DE MAESTRO
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const f = e.target.files[0];
             const reader = new FileReader();
@@ -164,15 +159,25 @@
                 if (ext.includes('xl')) {
                     const wb = XLSX.read(new Uint8Array(evt.target.result), {type: 'array'});
                     const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                    json.forEach(row => processRow(row.codigo || row.CODIGO || Object.values(row)[0], row.stock || row.cantidad || Object.values(row)[2]));
+                    json.forEach(row => {
+                        let c = String(row.codigo || row.CODIGO || Object.values(row)[0]).trim();
+                        let s = parseInt(row.stock || row.cantidad || Object.values(row)[1]) || 0;
+                        if(c.length >= 8) { maestroMap.set(c, { exp: s, real: 0 }); totalEsperado += s; }
+                    });
                 } else {
-                    evt.target.result.split('\n').forEach(l => {
-                        const p = l.split(/[;,|]/);
-                        if(p[0]) processRow(p[0], p[1]);
+                    evt.target.result.split('\n').forEach(line => {
+                        const p = line.split(/[;,|]/);
+                        if(p[0]) { 
+                            let c = p[0].trim();
+                            let s = parseInt(p[1]) || 0;
+                            maestroMap.set(c, { exp: s, real: 0 }); 
+                            totalEsperado += s; 
+                        }
                     });
                 }
-                localStorage.setItem("pieers_total_exp", totalEsperado);
-                persistirMaestro();
+                localStorage.setItem("p_total_v7", totalEsperado);
+                syncConteo();
+                saveState();
                 actualizarInterfaz();
                 toggleMenu();
                 beep(800, 0.1);
@@ -180,53 +185,44 @@
             if (ext.includes('xl')) reader.readAsArrayBuffer(f); else reader.readAsText(f);
         });
 
-        function processRow(cod, stock) {
-            let c = String(cod || "").trim();
-            let s = parseInt(stock) || 0;
-            if(c.length >= 8) {
-                maestroMap.set(c, { exp: s, real: 0 });
-                totalEsperado += s;
+        function syncConteo() {
+            maestroMap.forEach(v => v.real = 0);
+            historialActual.forEach(c => {
+                if(maestroMap.has(c)) maestroMap.get(c).real++;
+                else maestroMap.set(c, { exp: 0, real: 1 });
+            });
+        }
+
+        function saveState() {
+            localStorage.setItem("p_maestro_v7", JSON.stringify(Object.fromEntries(maestroMap)));
+            localStorage.setItem("p_act_v7", JSON.stringify(historialActual));
+        }
+
+        function loadState() {
+            const m = localStorage.getItem("p_maestro_v7");
+            if (m) {
+                maestroMap = new Map(Object.entries(JSON.parse(m)));
+                syncConteo();
             }
         }
 
-        // PERSISTENCIA DE MAESTRO (Para no perder carga al salir)
-        function persistirMaestro() {
-            const obj = Object.fromEntries(maestroMap);
-            localStorage.setItem("pieers_maestro_data", JSON.stringify(obj));
-        }
-
-        function cargarMaestroPersistido() {
-            const data = localStorage.getItem("pieers_maestro_data");
-            if (data) {
-                const obj = JSON.parse(data);
-                maestroMap = new Map(Object.entries(obj));
-                // Sincronizar con lo que ya se escaneó
-                historialActual.forEach(c => { if(maestroMap.has(c)) maestroMap.get(c).real++; });
-            }
-        }
-
-        // ESCÁNER 13 DÍGITOS
+        // ESCÁNER
         document.getElementById("scanner").addEventListener("input", function() {
             if (bloqueado) return;
             clearTimeout(timerScanner);
             timerScanner = setTimeout(() => {
                 let cod = this.value.trim();
                 if (!cod) return;
-
                 if (cod.length === 13) {
                     historialActual.push(cod);
-                    if(maestroMap.has(cod)) {
-                        maestroMap.get(cod).real++;
-                        beep(1000, 0.08);
-                    } else {
-                        maestroMap.set(cod, { exp: 0, real: 1 });
-                        beep(400, 0.2);
-                    }
-                    localStorage.setItem("pieers_act", JSON.stringify(historialActual));
+                    if(maestroMap.has(cod)) maestroMap.get(cod).real++;
+                    else maestroMap.set(cod, { exp: 0, real: 1 });
+                    saveState();
                     actualizarInterfaz(cod);
+                    beep(1000, 0.08);
                 } else {
                     bloqueado = true;
-                    document.getElementById("msg-error").innerText = "ERROR: " + cod.length + " DÍGITOS\n(" + cod + ")";
+                    document.getElementById("msg-error").innerText = "ERROR: " + cod.length + " DÍGITOS (" + cod + ")";
                     document.getElementById("overlay-error").style.display = "flex";
                     beep(200, 0.5);
                 }
@@ -235,32 +231,26 @@
         });
 
         function actualizarInterfaz(ultimoCod = null) {
-            const contado = historialActual.length;
+            const cont = historialActual.length;
             document.getElementById("stat-esperado").innerText = totalEsperado;
-            document.getElementById("stat-contado").innerText = contado;
-            let p = totalEsperado > 0 ? Math.round((contado/totalEsperado)*100) : 0;
+            document.getElementById("stat-contado").innerText = cont;
+            let p = totalEsperado > 0 ? Math.round((cont/totalEsperado)*100) : 0;
             document.getElementById("stat-avance").innerText = p + "%";
             document.getElementById("bar-fill").style.width = Math.min(p, 100) + "%";
 
-            // Panel Izquierdo (Flujo Reciente)
             const tL = document.getElementById("t-lectura");
             tL.innerHTML = "";
             historialActual.slice(-20).reverse().forEach((c, i) => {
                 tL.innerHTML += `<tr><td>${historialActual.length - i}</td><td>${c}</td></tr>`;
             });
 
-            // Panel Derecho (Maestro Comparativo)
             const tM = document.getElementById("t-maestro");
             tM.innerHTML = "";
+            let limit = 0;
             if(ultimoCod && maestroMap.has(ultimoCod)) renderFila(tM, ultimoCod, maestroMap.get(ultimoCod), true);
-            
-            let c = 0;
             for (let [k, v] of maestroMap) {
                 if(k === ultimoCod) continue;
-                if(v.real > 0 || c < 30) {
-                    renderFila(tM, k, v);
-                    c++;
-                }
+                if(v.real > 0 || limit < 40) { renderFila(tM, k, v); limit++; }
             }
         }
 
@@ -269,49 +259,87 @@
             t.innerHTML += `<tr class="${s} ${h?'highlight':''}"><td>${k}</td><td>${v.exp}</td><td>${v.real}</td></tr>`;
         }
 
-        // GUARDAR / REANUDAR
         function guardarLoteActual() {
-            if (historialActual.length === 0) return;
-            let n = prompt("Nombre del lote:", "LOTE " + (lotes.length + 1));
+            if (historialActual.length === 0) return alert("Nada que guardar.");
+            let n = prompt("Nombre Reporte:", "AUDITORIA " + (lotes.length + 1));
             if (!n) return;
-            lotes.push({ nombre: n, fecha: new Date().toLocaleString(), datos: [...historialActual] });
-            localStorage.setItem("pieers_lotes", JSON.stringify(lotes));
+            
+            lotes.push({ 
+                nombre: n, 
+                fecha: new Date().toLocaleString(), 
+                datosLectura: [...historialActual],
+                maestroSnapshot: Object.fromEntries(maestroMap)
+            });
+            localStorage.setItem("p_lotes_v7", JSON.stringify(lotes));
+            
             historialActual = [];
-            localStorage.removeItem("pieers_act");
             maestroMap.forEach(v => v.real = 0);
+            saveState();
             actualizarInterfaz();
             toggleMenu();
         }
 
-        function reanudarLote(idx) {
-            lotes[idx].datos.forEach(c => {
-                historialActual.push(c);
-                if(maestroMap.has(c)) maestroMap.get(c).real++;
-            });
-            localStorage.setItem("pieers_act", JSON.stringify(historialActual));
-            lotes.splice(idx, 1);
-            localStorage.setItem("pieers_lotes", JSON.stringify(lotes));
-            cerrarModal('modalLotes');
-            actualizarInterfaz();
-        }
-
-        // EXPORTACIÓN DOBLE (TXT / EXCEL)
+        // EXPORTACIÓN ACTUALIZADA
         function exportarExcel(idx) {
             const lote = lotes[idx];
-            let counts = {}; lote.datos.forEach(d => counts[d] = (counts[d] || 0) + 1);
-            const data = Object.entries(counts).map(([k, v]) => ({ CODIGO: k, CANTIDAD: v }));
-            const ws = XLSX.utils.json_to_sheet(data);
+            
+            // HOJA 1: CONCILIACIÓN
+            const concilia = Object.entries(lote.maestroSnapshot).map(([cod, v]) => ({
+                CODIGO: cod,
+                STOCK_CARGA: v.exp,
+                CONTEO_REAL: v.real,
+                DIFERENCIA: v.real - v.exp,
+                ESTADO: v.real === v.exp ? "OK" : (v.real > v.exp ? "SOBRANTE" : "FALTANTE")
+            }));
+
+            // HOJA 2: LECTURAS CONSOLIDADAS (Agrupadas por código)
+            const conteoAgrupado = {};
+            lote.datosLectura.forEach(cod => {
+                conteoAgrupado[cod] = (conteoAgrupado[cod] || 0) + 1;
+            });
+
+            const datosAgrupados = Object.entries(conteoAgrupado).map(([cod, cant]) => ({
+                CODIGO: cod,
+                CANTIDAD_TOTAL: cant
+            }));
+
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Inventario");
-            XLSX.writeFile(wb, `${lote.nombre}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(concilia), "CONCILIACION");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(datosAgrupados), "LECTURAS_CONSOLIDADAS");
+            XLSX.writeFile(wb, `${lote.nombre}_CONCILIADO.xlsx`);
         }
 
         function exportarTxt(idx) {
             const lote = lotes[idx];
-            let counts = {}; lote.datos.forEach(d => counts[d] = (counts[d] || 0) + 1);
-            let txt = "CODIGO|CANTIDAD\n" + Object.entries(counts).map(([k,v]) => `${k}|${v}`).join('\n');
-            const b = new Blob([txt], {type: "text/plain"});
-            const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `${lote.nombre}.txt`; a.click();
+            
+            // Consolidar lecturas para el TXT
+            const conteoAgrupado = {};
+            lote.datosLectura.forEach(cod => {
+                conteoAgrupado[cod] = (conteoAgrupado[cod] || 0) + 1;
+            });
+
+            // Generar TXT sin encabezados: CODIGO|CANTIDAD
+            let txt = "";
+            Object.entries(conteoAgrupado).forEach(([cod, cant]) => {
+                txt += `${cod}|${cant}\n`;
+            });
+
+            const b = new Blob([txt], {type:"text/plain"});
+            const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `${lote.nombre}_CONSOLIDADO.txt`; a.click();
+        }
+
+        function reanudarLote(idx) {
+            const lote = lotes[idx];
+            lote.datosLectura.forEach(c => {
+                historialActual.push(c);
+                if(maestroMap.has(c)) maestroMap.get(c).real++;
+                else maestroMap.set(c, { exp: 0, real: 1 });
+            });
+            lotes.splice(idx, 1);
+            localStorage.setItem("p_lotes_v7", JSON.stringify(lotes));
+            saveState();
+            cerrarModal('modalLotes');
+            actualizarInterfaz();
         }
 
         function abrirModal(id) { document.getElementById(id).style.display = "flex"; if(id === 'modalLotes') renderLotes(); toggleMenu(); }
@@ -322,21 +350,20 @@
             d.innerHTML = "";
             lotes.forEach((l, i) => {
                 d.innerHTML += `<div class="card-lote">
-                    <strong>${l.nombre}</strong><br><small>${l.fecha} | ${l.datos.length} Unid.</small><br><br>
+                    <strong style="color:#3498db">${l.nombre}</strong><br><small>${l.fecha} | ${l.datosLectura.length} Unid.</small><br><br>
                     <button onclick="reanudarLote(${i})" style="background:#3498db; color:white; border:none; padding:8px; border-radius:5px; font-size:10px;">REANUDAR</button>
-                    <button onclick="exportarExcel(${i})" style="background:#2ecc71; color:black; border:none; padding:8px; border-radius:5px; font-size:10px;">EXCEL</button>
-                    <button onclick="exportarTxt(${i})" style="background:#2ecc71; color:black; border:none; padding:8px; border-radius:5px; font-size:10px;">TXT</button>
+                    <button onclick="exportarExcel(${i})" style="background:#2ecc71; color:black; border:none; padding:8px; border-radius:5px; font-size:10px;">EXCEL COMPLETO</button>
+                    <button onclick="exportarTxt(${i})" style="background:#2ecc71; color:black; border:none; padding:8px; border-radius:5px; font-size:10px;">TXT CONSOLIDADO</button>
                     <button onclick="eliminarLote(${i})" style="background:#e74c3c; color:white; border:none; padding:8px; border-radius:5px; font-size:10px;">BORRAR</button>
                 </div>`;
             });
         }
 
-        function eliminarLote(i) { if(confirm("¿Eliminar?")) { lotes.splice(i, 1); localStorage.setItem("pieers_lotes", JSON.stringify(lotes)); renderLotes(); } }
+        function eliminarLote(i) { if(confirm("¿Eliminar?")) { lotes.splice(i, 1); localStorage.setItem("p_lotes_v7", JSON.stringify(lotes)); renderLotes(); } }
         function desbloquear() { bloqueado = false; document.getElementById("overlay-error").style.display = "none"; document.getElementById("scanner").focus(); }
-        function resetearApp() { if(confirm("¿RESET TOTAL?")) { localStorage.clear(); location.reload(); } }
+        function resetearApp() { if(confirm("¿BORRAR TODO?")) { localStorage.clear(); location.reload(); } }
 
-        // Inicialización
-        cargarMaestroPersistido();
+        loadState();
         actualizarInterfaz();
         document.addEventListener("click", () => { if(!bloqueado) document.getElementById("scanner").focus(); });
     </script>
