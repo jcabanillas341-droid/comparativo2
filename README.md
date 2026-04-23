@@ -1,2 +1,330 @@
-# comparativo2
-comparativo pieers
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pieers Ultra - Validador de Stock 19K</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * { font-family: 'Arial Black', sans-serif; box-sizing: border-box; }
+        body { background: #121212; color: #e0e0e0; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        /* CABECERA */
+        .header-main { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #1e1e1e; border-bottom: 3px solid #3498db; }
+        .btn-menu { background: #3498db; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-size: 11px; }
+        
+        .menu-dropdown { 
+            display: none; position: absolute; right: 10px; top: 55px; background: #1e1e1e; 
+            z-index: 5000; border: 1px solid #333; border-radius: 8px; min-width: 220px;
+        }
+        .menu-dropdown button { 
+            width: 100%; padding: 12px; background: none; border: none; color: white; 
+            text-align: left; border-bottom: 1px solid #333; cursor: pointer; font-size: 11px;
+        }
+
+        #scanner { 
+            width: 96%; margin: 8px auto; display: block; padding: 15px; font-size: 22px; 
+            border-radius: 10px; border: 4px solid #3498db; text-align: center; background: #fff; color: #333;
+        }
+
+        /* RESUMEN DE CARGA (PROGRESO) */
+        .progress-section { background: #1e1e1e; padding: 10px; margin: 0 5px 8px 5px; border-radius: 8px; border: 1px solid #333; }
+        .progress-stats { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .stat-group { text-align: center; flex: 1; }
+        .stat-val { display: block; font-size: 20px; color: #3498db; }
+        .stat-lab { font-size: 9px; color: #888; text-transform: uppercase; }
+        .bar-bg { background: #333; height: 12px; border-radius: 6px; overflow: hidden; }
+        #bar-fill { background: #2ecc71; height: 100%; width: 0%; transition: width 0.3s; }
+
+        /* VISTA DIVIDIDA */
+        .split-view { display: flex; flex: 1; gap: 5px; overflow: hidden; padding: 0 5px 5px 5px; }
+        .panel { flex: 1; display: flex; flex-direction: column; background: #1a1a1a; border-radius: 8px; overflow: hidden; border: 1px solid #333; }
+        .panel-h { background: #2c3e50; padding: 8px; font-size: 10px; text-align: center; color: #3498db; }
+
+        .scroll { flex: 1; overflow-y: auto; background: white; }
+        table { width: 100%; border-collapse: collapse; color: #333; table-layout: fixed; }
+        th { background: #444; color: white; padding: 6px; font-size: 9px; position: sticky; top: 0; }
+        td { padding: 10px 4px; border: 1px solid #eee; text-align: center; font-size: 12px; font-weight: bold; }
+
+        /* ESTADOS */
+        .match { background: #d4edda !important; color: #155724; }
+        .falta { background: #fff3cd !important; color: #856404; }
+        .sobrante { background: #f8d7da !important; color: #721c24; }
+        .highlight { border: 3px solid #f1c40f !important; }
+
+        /* BLOQUEO POR ERROR */
+        #error-overlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(231, 76, 60, 0.95); z-index: 9999; flex-direction: column; 
+            justify-content: center; align-items: center; text-align: center;
+        }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 4000; padding: 20px; flex-direction: column; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header-main">
+        <div style="font-size: 14px; color: #3498db;">PIEERS VALIDADOR MAESTRO</div>
+        <button class="btn-menu" onclick="toggleMenu()">☰ MENÚ</button>
+        <div id="menuContent" class="menu-dropdown">
+            <button onclick="document.getElementById('fileInput').click()">📥 CARGAR MAESTRO (EXCEL/TXT)</button>
+            <button onclick="guardarLoteActual()">💾 GUARDAR GRUPO ACTUAL</button>
+            <button onclick="abrirModal('modalLotes')">📂 VER LOTES GUARDADOS</button>
+            <button onclick="resetearApp()" style="color:#e74c3c">🗑️ RESETEAR TODO</button>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .txt, .csv">
+    <input id="scanner" inputmode="none" autofocus placeholder="ESCANEE CÓDIGO (13 DÍGITOS)" autocomplete="off">
+
+    <div class="progress-section">
+        <div class="progress-stats">
+            <div class="stat-group">
+                <span id="stat-esperado" class="stat-val">0</span>
+                <span class="stat-lab">Stock Maestro</span>
+            </div>
+            <div class="stat-group">
+                <span id="stat-contado" class="stat-val">0</span>
+                <span class="stat-lab">Total Contado</span>
+            </div>
+            <div class="stat-group">
+                <span id="stat-porcentaje" class="stat-val">0%</span>
+                <span class="stat-lab">Avance</span>
+            </div>
+        </div>
+        <div class="bar-bg">
+            <div id="bar-fill"></div>
+        </div>
+    </div>
+
+    <div class="split-view">
+        <div class="panel">
+            <div class="panel-h">LECTURA RECIENTE</div>
+            <div class="scroll">
+                <table>
+                    <thead><tr><th style="width:30px;">#</th><th>CÓDIGO</th></tr></thead>
+                    <tbody id="t-lectura"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-h">COMPARATIVA MAESTRA</div>
+            <div class="scroll">
+                <table>
+                    <thead><tr><th>CÓDIGO</th><th style="width:35px;">EXP</th><th style="width:35px;">REAL</th></tr></thead>
+                    <tbody id="t-maestro"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="error-overlay">
+        <h1 style="color:white; font-size: 60px; margin:0;">⚠️</h1>
+        <div id="error-msg" style="color:white; font-size: 18px; margin: 20px;"></div>
+        <button onclick="desbloquear()" style="background:#f1c40f; color:black; padding:20px; border:none; border-radius:10px; width:80%; font-weight:bold;">CORREGIR LECTURA</button>
+    </div>
+
+    <div id="modalLotes" class="modal">
+        <h2 style="color:#3498db; text-align:center;">LOTES GUARDADOS</h2>
+        <div id="listaLotes" style="flex:1; overflow-y:auto;"></div>
+        <button onclick="cerrarModal('modalLotes')" style="background:#e74c3c; color:white; padding:15px; border:none; width:100%; border-radius:10px; margin-top:10px;">VOLVER</button>
+    </div>
+
+    <script>
+        let maestroMap = new Map();
+        let historialActual = JSON.parse(localStorage.getItem("p_act_v3")) || [];
+        let lotes = JSON.parse(localStorage.getItem("p_lot_v3")) || [];
+        let totalEsperado = 0;
+        let bloqueado = false;
+        let timerScanner = null;
+        const audio = new (window.AudioContext || window.webkitAudioContext)();
+
+        function beep(f, d) {
+            const o = audio.createOscillator(); const g = audio.createGain();
+            o.connect(g); g.connect(audio.destination);
+            o.frequency.value = f; g.gain.value = 0.05;
+            o.start(); o.stop(audio.currentTime + d);
+        }
+
+        function toggleMenu() { document.getElementById("menuContent").style.display = (document.getElementById("menuContent").style.display === "block") ? "none" : "block"; }
+
+        // CARGA MASIVA (EXCEL / TXT)
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const f = e.target.files[0];
+            const reader = new FileReader();
+            const ext = f.name.split('.').pop().toLowerCase();
+
+            reader.onload = function(evt) {
+                maestroMap.clear();
+                totalEsperado = 0;
+                if (ext.includes('xl')) {
+                    const data = new Uint8Array(evt.target.result);
+                    const wb = XLSX.read(data, {type: 'array'});
+                    const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                    json.forEach(row => {
+                        let c = String(row.codigo || row.CODIGO || Object.values(row)[0]).trim();
+                        let s = parseInt(row.stock || row.cantidad || Object.values(row)[1]) || 0;
+                        if(c.length >= 8) {
+                            maestroMap.set(c, { exp: s, real: 0 });
+                            totalEsperado += s;
+                        }
+                    });
+                } else {
+                    evt.target.result.split('\n').forEach(line => {
+                        const p = line.split(/[;,|]/);
+                        if(p[0]) {
+                            let s = parseInt(p[1]) || 0;
+                            maestroMap.set(p[0].trim(), { exp: s, real: 0 });
+                            totalEsperado += s;
+                        }
+                    });
+                }
+                // Sincronizar lectura actual
+                historialActual.forEach(c => { if(maestroMap.has(c)) maestroMap.get(c).real++; });
+                actualizarInterfaz();
+                toggleMenu();
+                beep(800, 0.1);
+            };
+            if (ext.includes('xl')) reader.readAsArrayBuffer(f); else reader.readAsText(f);
+        });
+
+        // ESCÁNER
+        document.getElementById("scanner").addEventListener("input", function() {
+            if (bloqueado) return;
+            clearTimeout(timerScanner);
+            timerScanner = setTimeout(() => {
+                let cod = this.value.trim();
+                if (!cod) return;
+
+                if (cod.length === 13) {
+                    historialActual.push(cod);
+                    if(maestroMap.has(cod)) {
+                        maestroMap.get(cod).real++;
+                        beep(1000, 0.08);
+                    } else {
+                        maestroMap.set(cod, { exp: 0, real: 1 });
+                        beep(400, 0.2);
+                    }
+                    localStorage.setItem("p_act_v3", JSON.stringify(historialActual));
+                    actualizarInterfaz(cod);
+                } else {
+                    bloqueado = true;
+                    document.getElementById("error-msg").innerText = "ERROR DE LECTURA: " + cod.length + " DÍGITOS\n(" + cod + ")";
+                    document.getElementById("error-overlay").style.display = "flex";
+                    beep(200, 0.5);
+                }
+                this.value = "";
+            }, 40);
+        });
+
+        function actualizarInterfaz(ultimoCod = null) {
+            const contado = historialActual.length;
+            document.getElementById("stat-esperado").innerText = totalEsperado;
+            document.getElementById("stat-contado").innerText = contado;
+            
+            let porc = totalEsperado > 0 ? Math.round((contado / totalEsperado) * 100) : 0;
+            document.getElementById("stat-porcentaje").innerText = porc + "%";
+            document.getElementById("bar-fill").style.width = Math.min(porc, 100) + "%";
+
+            // Panel Izquierdo (Lectura Reciente - últimos 20 para fluidez)
+            const tL = document.getElementById("t-lectura");
+            tL.innerHTML = "";
+            historialActual.slice(-20).reverse().forEach((c, i) => {
+                tL.innerHTML += `<tr><td>${historialActual.length - i}</td><td>${c}</td></tr>`;
+            });
+
+            // Panel Derecho (Maestro)
+            const tM = document.getElementById("t-maestro");
+            tM.innerHTML = "";
+            
+            // Si hay un código recién leído, lo ponemos de primero para comparar al costado
+            if(ultimoCod && maestroMap.has(ultimoCod)) {
+                let v = maestroMap.get(ultimoCod);
+                renderFilaMaestro(tM, ultimoCod, v, true);
+            }
+
+            // Mostrar el resto del maestro con actividad
+            let count = 0;
+            for (let [k, v] of maestroMap) {
+                if(k === ultimoCod) continue;
+                if(v.real > 0 || count < 30) {
+                    renderFilaMaestro(tM, k, v);
+                    count++;
+                }
+            }
+        }
+
+        function renderFilaMaestro(target, cod, v, resaltado = false) {
+            let s = (v.real === v.exp && v.exp > 0) ? "match" : (v.real > v.exp ? "sobrante" : "falta");
+            target.innerHTML += `<tr class="${s} ${resaltado ? 'highlight' : ''}">
+                <td>${cod}</td><td>${v.exp}</td><td>${v.real}</td>
+            </tr>`;
+        }
+
+        // GUARDAR / REANUDAR / EXPORTAR
+        function guardarLoteActual() {
+            if (historialActual.length === 0) return;
+            let n = prompt("Nombre Lote:", "LOTE " + (lotes.length + 1));
+            if (!n) return;
+            lotes.push({ nombre: n, fecha: new Date().toLocaleString(), datos: [...historialActual] });
+            localStorage.setItem("p_lot_v3", JSON.stringify(lotes));
+            historialActual = [];
+            localStorage.removeItem("p_act_v3");
+            maestroMap.forEach(v => v.real = 0);
+            actualizarInterfaz();
+            toggleMenu();
+        }
+
+        function reanudarLote(idx) {
+            if(!confirm("¿Reanudar este lote?")) return;
+            lotes[idx].datos.forEach(c => {
+                historialActual.push(c);
+                if(maestroMap.has(c)) maestroMap.get(c).real++;
+            });
+            localStorage.setItem("p_act_v3", JSON.stringify(historialActual));
+            lotes.splice(idx, 1);
+            localStorage.setItem("p_lot_v3", JSON.stringify(lotes));
+            cerrarModal('modalLotes');
+            actualizarInterfaz();
+        }
+
+        function exportarTxt(idx) {
+            let l = lotes[idx];
+            let c = {}; l.datos.forEach(d => c[d] = (c[d] || 0) + 1);
+            let txt = "CODIGO|CANTIDAD\n" + Object.entries(c).map(([k,v]) => `${k}|${v}`).join('\n');
+            const blob = new Blob([txt], {type:"text/plain"});
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${l.nombre}.txt`; a.click();
+        }
+
+        function abrirModal(id) {
+            document.getElementById(id).style.display = "flex";
+            if(id === 'modalLotes') renderLotes();
+            toggleMenu();
+        }
+
+        function renderLotes() {
+            const div = document.getElementById("listaLotes");
+            div.innerHTML = "";
+            lotes.forEach((l, i) => {
+                div.innerHTML += `<div style="background:#333; padding:12px; border-radius:8px; margin-bottom:10px; border-left:5px solid #3498db;">
+                    <strong>${l.nombre}</strong><br><small>${l.fecha} | ${l.datos.length} Unid.</small><br><br>
+                    <button onclick="reanudarLote(${i})" style="background:#3498db; color:white; border:none; padding:8px; border-radius:5px; font-size:11px;">REANUDAR</button>
+                    <button onclick="exportarTxt(${i})" style="background:#2ecc71; color:white; border:none; padding:8px; border-radius:5px; font-size:11px;">EXPORTAR TXT</button>
+                    <button onclick="eliminarLote(${i})" style="background:#e74c3c; color:white; border:none; padding:8px; border-radius:5px; font-size:11px;">BORRAR</button>
+                </div>`;
+            });
+        }
+
+        function eliminarLote(i) { if(confirm("¿Borrar?")) { lotes.splice(i, 1); localStorage.setItem("p_lot_v3", JSON.stringify(lotes)); renderLotes(); } }
+        function cerrarModal(id) { document.getElementById(id).style.display = "none"; document.getElementById("scanner").focus(); }
+        function desbloquear() { bloqueado = false; document.getElementById("error-overlay").style.display = "none"; document.getElementById("scanner").focus(); }
+        function resetearApp() { if(confirm("¿RESET TOTAL?")) { localStorage.clear(); location.reload(); } }
+
+        actualizarInterfaz();
+        document.addEventListener("click", () => { if(!bloqueado) document.getElementById("scanner").focus(); });
+    </script>
+</body>
+</html>
