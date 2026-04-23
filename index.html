@@ -282,22 +282,48 @@
         // EXPORTACIÓN ACTUALIZADA
         function exportarExcel(idx) {
             const lote = lotes[idx];
-            
-            // HOJA 1: CONCILIACIÓN
-            const concilia = Object.entries(lote.maestroSnapshot).map(([cod, v]) => ({
-                CODIGO: cod,
-                STOCK_CARGA: v.exp,
-                CONTEO_REAL: v.real,
-                DIFERENCIA: v.real - v.exp,
-                ESTADO: v.real === v.exp ? "OK" : (v.real > v.exp ? "SOBRANTE" : "FALTANTE")
-            }));
 
-            // HOJA 2: LECTURAS CONSOLIDADAS (Agrupadas por código)
+            // Agrupar lecturas por código para obtener el conteo real por código
             const conteoAgrupado = {};
             lote.datosLectura.forEach(cod => {
                 conteoAgrupado[cod] = (conteoAgrupado[cod] || 0) + 1;
             });
 
+            // HOJA 1: CONCILIACIÓN con las 6 columnas exactas
+            const concilia = [];
+
+            // Códigos del maestro
+            Object.entries(lote.maestroSnapshot).forEach(([cod, v]) => {
+                const cantLeida = conteoAgrupado[cod] || 0;
+                const diff = cantLeida - v.exp;
+                let estado = "OK";
+                if (diff < 0) estado = "FALTA";
+                else if (diff > 0) estado = "SOBRA";
+                concilia.push({
+                    "A - COD_MAESTRO": cod,
+                    "B - COD_LECTURA": cantLeida > 0 ? cod : "",
+                    "C - STOCK_ESPERADO": v.exp,
+                    "D - CONTEO_REAL": cantLeida,
+                    "E - ESTADO": estado,
+                    "F - DIFERENCIA": Math.abs(diff)
+                });
+            });
+
+            // Códigos leídos que NO están en el maestro (sobrantes puros)
+            Object.entries(conteoAgrupado).forEach(([cod, cant]) => {
+                if (!lote.maestroSnapshot.hasOwnProperty(cod)) {
+                    concilia.push({
+                        "A - COD_MAESTRO": "",
+                        "B - COD_LECTURA": cod,
+                        "C - STOCK_ESPERADO": 0,
+                        "D - CONTEO_REAL": cant,
+                        "E - ESTADO": "SOBRA",
+                        "F - DIFERENCIA": cant
+                    });
+                }
+            });
+
+            // HOJA 2: LECTURAS CONSOLIDADAS (Agrupadas por código)
             const datosAgrupados = Object.entries(conteoAgrupado).map(([cod, cant]) => ({
                 CODIGO: cod,
                 CANTIDAD_TOTAL: cant
