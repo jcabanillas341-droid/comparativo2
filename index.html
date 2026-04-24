@@ -164,7 +164,15 @@
            autocapitalize="off"
            spellcheck="false"
            autofocus
-           placeholder="ESCANEE CÓDIGO">
+           placeholder="ESCANEE CÓDIGO"
+           style="padding:9px;font-size:15px;margin:5px auto;">
+
+    <!-- PANEL DESCRIPCIÓN -->
+    <div id="panel-desc" style="display:none;margin:0 10px 5px;background:#1a3a1a;border:1px solid #2ecc71;border-radius:8px;padding:6px 12px;flex-shrink:0;">
+        <span style="font-size:9px;color:#888;text-transform:uppercase;">Descripción — </span>
+        <span id="desc-cod" style="font-size:9px;color:#aaa;"></span>
+        <span id="desc-txt" style="font-size:13px;color:#2ecc71;font-weight:bold;display:block;margin-top:1px;"></span>
+    </div>
 
     <div class="progress-box">
         <div class="stats-grid">
@@ -265,6 +273,7 @@ const CHUNK_SIZE     = 500;  // filas a procesar por tick al cargar maestro
 let modoActual = null; // 'comp' | 'inv'
 
 // — COMPARATIVO —
+let descripcionMap = new Map(); // código → descripción
 let maestroMap    = new Map();
 let historial     = [];
 let lotes         = [];
@@ -433,14 +442,14 @@ function procesarCodigo(cod) {
             mostrarError(cod, 'COMP: Se esperan 13 dígitos');
         }
     } else {
-        if (cod.length >= 4) {
+        if (cod.length === 13) {
             invHistorial.push(cod);
             invConteo.set(cod, (invConteo.get(cod) || 0) + 1);
             schedSave('inv');
             schedRender('inv', cod);
             beepOK();
         } else {
-            mostrarError(cod, 'INV: Código muy corto');
+            mostrarError(cod, 'Se esperan exactamente 13 dígitos');
         }
     }
 }
@@ -471,6 +480,8 @@ function saveComp() {
         localStorage.setItem('p_maestro_v8', JSON.stringify(Object.fromEntries(maestroMap)));
         localStorage.setItem('p_hist_v8',    JSON.stringify(historial));
         localStorage.setItem('p_total_v8',   totalEsp);
+        if (descripcionMap.size > 0)
+            localStorage.setItem('p_desc_v8', JSON.stringify(Object.fromEntries(descripcionMap)));
     } catch(e) { showToast('⚠️ Error al guardar (sin espacio)', '#e74c3c'); }
 }
 function saveInv() {
@@ -498,6 +509,8 @@ function loadStateComp() {
     }
     // Re-sync por si el historial difiere del mapa
     if (historial.length > 0 && maestroMap.size > 0) syncConteo();
+    const d = localStorage.getItem('p_desc_v8');
+    if (d) descripcionMap = new Map(Object.entries(JSON.parse(d)));
 }
 
 function loadStateInv() {
@@ -565,22 +578,28 @@ function procesarFilasMaestro(rows, offset, isTxt=false) {
 
     for (let i = offset; i < end; i++) {
         const row = rows[i];
-        let cod, stock;
+        let cod, stock, desc = '';
 
         if (isTxt) {
             cod   = row._cod;
             stock = row._stock;
         } else {
-            // Excel: intentar detectar columna de código y stock
+            // Excel: intentar detectar columna de código, descripción y stock
             const vals = Object.values(row);
             cod   = String(row.codigo || row.CODIGO || row.Codigo ||
                            row.code   || row.CODE   || vals[0] || '').trim();
-            stock = parseInt(row.stock || row.STOCK || row.cantidad ||
-                             row.CANTIDAD || row.qty || vals[1]) || 0;
+            desc  = String(row.descripcion || row.DESCRIPCION || row.Descripcion ||
+                           row.description || row.DESCRIPTION || row.desc || row.DESC ||
+                           vals[1] || '').trim();
+            // Si la segunda columna es numérica es stock, no descripción
+            if (!isNaN(desc) && desc !== '') { stock = parseInt(desc)||0; desc = ''; }
+            else stock = parseInt(row.stock || row.STOCK || row.cantidad ||
+                             row.CANTIDAD || row.qty || vals[2]) || 0;
         }
 
         if (cod && cod.length >= 4 && cod !== 'undefined') {
             maestroMap.set(cod, { exp: stock, real: 0 });
+            if (desc) descripcionMap.set(cod, desc);
             totalEsp += stock;
         }
     }
@@ -692,8 +711,19 @@ function crearFilaComp(k, v, resaltar=false) {
     const tr = document.createElement('tr');
     const cls = (v.real === v.exp && v.exp > 0) ? 'match' : (v.real > v.exp ? 'sobrante' : 'falta');
     tr.className = cls + (resaltar ? ' resaltar' : '');
+    tr.style.cursor = 'pointer';
     tr.innerHTML = `<td>${k}</td><td>${v.exp}</td><td>${v.real}</td>`;
+    tr.addEventListener('click', () => mostrarDesc(k));
     return tr;
+}
+
+function mostrarDesc(cod) {
+    const desc = descripcionMap.get(cod) || '';
+    const panel = document.getElementById('panel-desc');
+    if (!desc) { panel.style.display = 'none'; return; }
+    document.getElementById('desc-cod').textContent = cod + ' — ';
+    document.getElementById('desc-txt').textContent = desc;
+    panel.style.display = 'block';
 }
 
 function renderInv(ultimoCod=null) {
@@ -952,10 +982,28 @@ function desbloquear() {
     focusScanner();
 }
 function resetearApp() {
-    if (confirm('¿BORRAR TODO? (comparativo e inventario)')) {
-        // Limpiar solo las claves de esta app
-        ['p_maestro_v8','p_hist_v8','p_total_v8','p_lotes_v8','p_inv_hist_v8','p_inv_lotes_v8'].forEach(k => localStorage.removeItem(k));
-        location.reload();
+    if (confirm('¿BORRAR TODO? Se eliminarán todos los datos de comparativo e inventario.')) {
+        // Borrar todas las claves de esta app (v8 y versiones anteriores)
+        const claves = Object.keys(localStorage).filter(k =>
+            k.startsWith('p_maestro') || k.startsWith('p_hist') ||
+            k.startsWith('p_total')   || k.startsWith('p_lotes') ||
+            k.startsWith('p_inv')
+        );
+        claves.forEach(k => localStorage.removeItem(k));
+
+        // Resetear estado en memoria también
+        maestroMap     = new Map();
+        descripcionMap = new Map();
+        historial      = [];
+        lotes          = [];
+        totalEsp       = 0;
+        invHistorial   = [];
+        invLotes       = [];
+        invConteo      = new Map();
+        toggleMenu();
+        showToast('✅ Todo reseteado correctamente', '#1e8449');
+
+        setTimeout(() => location.reload(), 800);
     }
 }
 function focusScanner() {
