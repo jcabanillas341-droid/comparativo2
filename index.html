@@ -2,134 +2,253 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Pieers Auditor PRO v3</title>
+    <title>Pieers Auditor PRO v7</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
-        * { font-family: 'Arial Black', sans-serif; box-sizing: border-box; }
-        body { background: #121212; color: #e0e0e0; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap');
+
+        :root {
+            --rojo: #D32F2F;
+            --rojo-dark: #B71C1C;
+            --rojo-light: #EF5350;
+            --negro: #111111;
+            --negro-soft: #1E1E1E;
+            --gris-borde: #E0E0E0;
+            --gris-bg: #F5F5F5;
+            --gris-mid: #9E9E9E;
+            --blanco: #FFFFFF;
+            --texto: #1A1A1A;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Barlow', sans-serif;
+            background: var(--blanco);
+            color: var(--texto);
+            margin: 0; display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden;
+        }
 
         /* ── SELECTOR DE MODO ── */
         #pantalla-modo {
-            position: fixed; inset: 0; background: #121212; z-index: 9000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 24px; padding: 28px;
+            position: fixed; inset: 0; background: var(--negro); z-index: 9000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            gap: 14px; padding: 24px;
         }
-        .logo-modo { font-size: 18px; color: #3498db; text-align: center; }
-        .logo-sub  { font-size: 11px; color: #888; text-align: center; margin-top: -14px; }
-        .btn-modo  {
-            width: 100%; padding: 26px 20px; border: none; border-radius: 14px;
-            font-size: 16px; font-weight: bold; cursor: pointer; text-align: left;
-            display: flex; align-items: center; gap: 16px;
-        }
-        .btn-modo .ico  { font-size: 34px; }
-        .btn-modo .txt  { display: flex; flex-direction: column; }
-        .btn-modo .tit  { font-size: 15px; }
-        .btn-modo .desc { font-size: 10px; font-weight: normal; margin-top: 4px; opacity: 0.85; }
-        .btn-comp { background: #2471a3; color: white; }
-        .btn-inv  { background: #1e8449; color: white; }
+        .logo-modo { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--blanco); letter-spacing: 3px; text-align: center; text-transform: uppercase; margin-bottom: 4px; }
+        .logo-acento { color: var(--rojo); }
+        .logo-sub { font-size: 12px; color: #666; text-align: center; margin-bottom: 8px; letter-spacing: 1px; }
+        .logo-v { font-size: 10px; color: #444; text-align: center; margin-top: -8px; }
+
+        .btn-modo { width: 100%; padding: 18px 16px; border: none; border-radius: 12px; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 14px; transition: transform 0.1s, filter 0.1s; }
+        .btn-modo:active { transform: scale(0.97); }
+        .btn-modo .ico { font-size: 30px; min-width: 36px; text-align: center; }
+        .btn-modo .txt { display: flex; flex-direction: column; }
+        .btn-modo .tit { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+        .btn-modo .desc { font-size: 11px; font-weight: 400; margin-top: 3px; opacity: 0.85; line-height: 1.4; }
+        .btn-comp { background: #1a1a1a; color: white; border: 2px solid #333; }
+        .btn-comp:hover { border-color: var(--rojo); }
+        .btn-alm  { background: var(--rojo); color: white; border: 2px solid var(--rojo-dark); }
+        .btn-alm:hover { filter: brightness(1.1); }
 
         /* ── CABECERA ── */
-        .header-app { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #1e1e1e; border-bottom: 3px solid var(--cm); flex-shrink: 0; }
-        .badge-modo { font-size: 9px; padding: 3px 8px; border-radius: 10px; color: white; background: var(--cm); margin-left: 6px; }
-        .btn-menu   { background: var(--cm); color: white; border: none; padding: 9px 11px; border-radius: 5px; font-size: 11px; cursor: pointer; }
-        .btn-cambio { background: #444; color: #ccc; border: none; padding: 8px 10px; border-radius: 5px; font-size: 10px; cursor: pointer; }
+        .header-app { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: var(--negro); border-bottom: 3px solid var(--rojo); flex-shrink: 0; position: relative; }
+        .header-logo { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 900; color: var(--blanco); letter-spacing: 1px; }
+        .logo-red { color: var(--rojo); }
+        .badge-modo { font-size: 9px; padding: 2px 8px; border-radius: 10px; color: white; background: var(--rojo); margin-left: 6px; letter-spacing: 0.5px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; }
+        .btn-menu { background: var(--rojo); color: white; border: none; padding: 7px 11px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 1px; }
+        .btn-cambio { background: #2a2a2a; color: #aaa; border: 1px solid #444; padding: 7px 10px; border-radius: 6px; font-size: 10px; cursor: pointer; }
 
-        .menu-dropdown {
-            display: none; position: absolute; right: 10px; top: 52px; background: #1e1e1e;
-            z-index: 5000; border: 1px solid #444; border-radius: 8px; min-width: 280px;
-        }
-        .menu-dropdown button {
-            width: 100%; padding: 14px; background: none; border: none; color: white;
-            text-align: left; border-bottom: 1px solid #333; cursor: pointer; font-size: 11px;
-        }
+        .menu-dropdown { display: none; position: absolute; right: 10px; top: 52px; background: var(--negro-soft); z-index: 5000; border: 1px solid #333; border-radius: 10px; min-width: 260px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        .menu-section { padding: 6px 12px 4px; font-size: 9px; color: #666; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; border-top: 1px solid #2a2a2a; }
+        .menu-section:first-child { border-top: none; }
+        .menu-dropdown button { width: 100%; padding: 13px 14px; background: none; border: none; color: #ddd; text-align: left; border-bottom: 1px solid #2a2a2a; cursor: pointer; font-size: 12px; font-family: 'Barlow', sans-serif; display: flex; align-items: center; gap: 8px; }
         .menu-dropdown button:hover { background: #2a2a2a; }
+        .menu-dropdown button:last-child { border-bottom: none; }
+        .menu-btn-danger { color: var(--rojo-light) !important; }
 
         /* ── SCANNER INPUT ── */
-        #scanner {
-            width: 96%; margin: 6px auto; display: block; padding: 13px;
-            font-size: 20px; border-radius: 10px; border: 4px solid var(--cm);
-            text-align: center; background: #fff; color: #333; flex-shrink: 0;
-            /* Evita autocorrección/sugerencias que interfieren con lectora BT */
-            autocomplete: off; autocorrect: off; autocapitalize: off; spellcheck: false;
-        }
+        #scanner { width: 96%; margin: 6px auto; display: block; padding: 11px 10px; font-size: 18px; border-radius: 10px; border: 3px solid var(--rojo); text-align: center; background: var(--blanco); color: var(--negro); flex-shrink: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 2px; }
 
         /* ── PROGRESO ── */
-        .progress-box { background: #1e1e1e; padding: 8px 10px; margin: 0 10px 8px; border-radius: 8px; border: 1px solid #333; flex-shrink: 0; }
-        .stats-grid   { display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .stat-val     { display: block; font-size: 20px; color: #2ecc71; text-align: center; }
-        .stat-lab     { font-size: 8px; color: #888; text-transform: uppercase; text-align: center; }
-        .bar-bg       { background: #333; height: 12px; border-radius: 6px; overflow: hidden; }
-        #bar-fill     { background: #2ecc71; height: 100%; width: 0%; transition: width 0.3s; }
+        .progress-box { background: var(--negro-soft); padding: 8px 10px; margin: 0 8px 6px; border-radius: 10px; border: 1px solid #2a2a2a; flex-shrink: 0; }
+        .stats-grid   { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .stat-val     { display: block; font-size: 22px; color: var(--rojo-light); text-align: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; }
+        .stat-lab     { font-size: 8px; color: #666; text-transform: uppercase; text-align: center; letter-spacing: 0.5px; }
+        .bar-bg       { background: #2a2a2a; height: 8px; border-radius: 4px; overflow: hidden; }
+        #bar-fill     { background: linear-gradient(90deg, var(--rojo-dark), var(--rojo-light)); height: 100%; width: 0%; transition: width 0.3s; }
 
-        /* ── TOAST de carga ── */
-        #toast {
-            display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: #2471a3; color: white; padding: 10px 22px; border-radius: 20px;
-            font-size: 13px; z-index: 8000; white-space: nowrap;
-        }
+        /* ── TOAST ── */
+        #toast { display: none; position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--negro); color: white; padding: 10px 20px; border-radius: 20px; font-size: 12px; z-index: 8000; white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis; font-family: 'Barlow', sans-serif; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.3); border-left: 4px solid var(--rojo); }
 
         /* ── PANELES ── */
-        .split-view { display: flex; flex: 1; gap: 6px; overflow: hidden; padding: 0 10px 10px; min-height: 0; }
-        .panel      { flex: 1; display: flex; flex-direction: column; background: #1a1a1a; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
-        .panel-h    { background: #2c3e50; padding: 8px; font-size: 10px; text-align: center; color: var(--cm); flex-shrink: 0; }
+        .split-view { display: flex; flex: 1; gap: 6px; overflow: hidden; padding: 0 8px 8px; min-height: 0; }
+        .panel      { flex: 1; display: flex; flex-direction: column; background: var(--blanco); border-radius: 10px; overflow: hidden; border: 1px solid var(--gris-borde); }
+        .panel-h    { background: var(--negro); padding: 7px 8px; font-size: 10px; text-align: center; color: var(--blanco); flex-shrink: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 2px solid var(--rojo); }
         .scroll     { flex: 1; overflow-y: auto; background: white; -webkit-overflow-scrolling: touch; }
 
-        table       { width: 100%; border-collapse: collapse; color: #333; table-layout: fixed; }
-        th          { background: #444; color: white; padding: 5px; font-size: 9px; position: sticky; top: 0; z-index: 10; }
-        td          { padding: 10px 4px; border-bottom: 1px solid #eee; text-align: center; font-size: 12px; font-weight: bold; }
+        table  { width: 100%; border-collapse: collapse; color: var(--texto); table-layout: fixed; }
+        th     { background: var(--negro); color: #ccc; padding: 6px 4px; font-size: 9px; position: sticky; top: 0; z-index: 10; text-transform: uppercase; letter-spacing: 0.5px; }
+        td     { padding: 9px 4px; border-bottom: 1px solid var(--gris-borde); text-align: center; font-size: 12px; font-weight: 600; }
 
-        .match    { background: #d4edda !important; color: #155724; }
-        .falta    { background: #fff3cd !important; color: #856404; }
-        .sobrante { background: #f8d7da !important; color: #721c24; }
+        .match    { background: #E8F5E9 !important; color: #1B5E20; }
+        .falta    { background: #FFF8E1 !important; color: #E65100; }
+        .sobrante { background: #FFEBEE !important; color: #B71C1C; }
 
         /* ── OVERLAY ERROR ── */
-        #overlay-error {
-            display: none; position: fixed; inset: 0;
-            background: rgba(231,76,60,0.96); z-index: 9999;
-            flex-direction: column; justify-content: center; align-items: center; text-align: center;
-        }
+        #overlay-error { display: none; position: fixed; inset: 0; background: rgba(183,28,28,0.97); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
 
         /* ── MODALES ── */
-        .modal      { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 4000; padding: 16px; flex-direction: column; }
-        .card-lote  { background: #2a2a2a; padding: 14px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid var(--cm); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 4000; padding: 14px; flex-direction: column; }
+        .modal-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 20px; color: var(--rojo); text-align: center; margin-bottom: 12px; letter-spacing: 1px; text-transform: uppercase; }
+        .card-lote  { background: #1a1a1a; padding: 14px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--rojo); }
         .hidden     { display: none !important; }
 
-        /* ── COLORES POR MODO ── */
-        body.modo-comp { --cm: #2471a3; }
-        body.modo-inv  { --cm: #1e8449; }
+        /* ── MÓDULO ALMACÉN ── */
+        #vista-alm { flex-direction: column; padding: 0 8px 8px; gap: 5px; }
+
+        /* Barra 3 botones BUSCAR | RETIRO | INGRESO — más pequeños */
+        .alm-action-bar { display: flex; gap: 5px; flex-shrink: 0; padding: 3px 0 2px; }
+        .alm-btn-buscar { flex: 1.1; padding: 7px 5px; border: 2px solid var(--negro-soft); border-radius: 8px; background: var(--negro-soft); color: var(--blanco); cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; transition: filter 0.15s; }
+        .alm-btn-buscar:active { filter: brightness(0.85); }
+        .alm-btn-retiro { flex: 1; padding: 7px 5px; border: 2px solid #333; border-radius: 8px; background: #1A1A1A; color: #888; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: all 0.15s; }
+        .alm-btn-retiro.activo { background: var(--negro); color: white; border-color: #FF5252; }
+        .alm-btn-ingreso { flex: 1; padding: 7px 5px; border: 2px solid #333; border-radius: 8px; background: #1A1A1A; color: #888; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: all 0.15s; }
+        .alm-btn-ingreso.activo { background: var(--rojo); color: white; border-color: var(--rojo-dark); }
+        .alm-btn-retiro:active, .alm-btn-ingreso:active { filter: brightness(0.85); }
+
+        #alm-estado-badge { font-size: 11px; color: var(--gris-mid); flex-shrink: 0; text-align: center; padding: 3px 8px; background: var(--gris-bg); border-radius: 6px; border: 1px solid var(--gris-borde); }
+
+        .alm-load-row { display: flex; gap: 5px; flex-shrink: 0; }
+        .alm-load-btn { flex: 1; padding: 8px 6px; border: none; border-radius: 8px; cursor: pointer; font-size: 10px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.3px; text-transform: uppercase; transition: filter 0.15s; }
+        .alm-load-btn:active { filter: brightness(0.85); }
+
+        .alm-footer-row { display: flex; gap: 5px; flex-shrink: 0; }
+        .alm-footer-btn { flex: 1; padding: 7px 4px; border: none; border-radius: 7px; cursor: pointer; font-size: 10px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.3px; text-transform: uppercase; transition: filter 0.15s; }
+        .alm-footer-btn:active { filter: brightness(0.85); }
+
+        #alm-filtro-rapido { flex: 1; padding: 7px 10px; border-radius: 7px; border: 1px solid var(--gris-borde); background: var(--gris-bg); color: var(--texto); font-size: 12px; font-family: 'Barlow', sans-serif; }
+        #alm-filtro-rapido:focus { outline: none; border-color: var(--rojo); }
+        #alm-filtro-rapido::placeholder { color: var(--gris-mid); }
+
+        /* ── MODAL BÚSQUEDA ── */
+        #modal-busqueda { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 6000; justify-content: center; align-items: flex-start; padding: 30px 16px 16px; }
+        .busq-card { background: var(--blanco); border-radius: 14px; width: 100%; max-width: 420px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.4); border-top: 4px solid var(--rojo); }
+        .busq-header { background: var(--negro); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .busq-title { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; color: var(--blanco); letter-spacing: 1px; text-transform: uppercase; }
+        .busq-close { background: none; border: none; color: #aaa; font-size: 20px; cursor: pointer; padding: 0 4px; }
+        .busq-body { padding: 14px; }
+        .busq-label { font-size: 10px; font-weight: 700; color: var(--gris-mid); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; display: block; }
+        .busq-select { width: 100%; padding: 9px 10px; border-radius: 8px; border: 2px solid var(--gris-borde); background: var(--gris-bg); color: var(--texto); font-size: 13px; font-family: 'Barlow', sans-serif; margin-bottom: 10px; cursor: pointer; }
+        .busq-select:focus { outline: none; border-color: var(--rojo); }
+        .busq-input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+        #busq-input { flex: 1; padding: 10px 12px; border-radius: 8px; border: 2px solid var(--gris-borde); background: var(--blanco); color: var(--texto); font-size: 14px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 1px; }
+        #busq-input:focus { outline: none; border-color: var(--rojo); }
+        #busq-input::placeholder { color: #bbb; font-weight: 400; font-size: 13px; letter-spacing: 0; }
+        .busq-btn-ok { padding: 10px 14px; border: none; border-radius: 8px; background: var(--rojo); color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .busq-btn-ok:active { filter: brightness(0.85); }
+        #busq-resultados { max-height: 220px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--gris-borde); background: var(--gris-bg); }
+        .busq-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--gris-borde); cursor: pointer; transition: background 0.1s; }
+        .busq-item:last-child { border-bottom: none; }
+        .busq-item:hover { background: #FFEBEE; }
+        .busq-item:active { background: #FFCDD2; }
+        .busq-item-desc { font-size: 12px; color: var(--texto); font-weight: 600; flex: 1; margin-right: 8px; line-height: 1.3; }
+        .busq-item-stock { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; min-width: 32px; text-align: right; }
+        .busq-item-cod { font-size: 9px; color: var(--gris-mid); display: block; margin-top: 1px; }
+        .busq-empty { padding: 20px; text-align: center; color: var(--gris-mid); font-size: 12px; }
+        .busq-footer { padding: 10px 14px; background: var(--gris-bg); border-top: 1px solid var(--gris-borde); display: flex; justify-content: space-between; align-items: center; }
+        .busq-total-label { font-size: 10px; color: var(--gris-mid); text-transform: uppercase; letter-spacing: 1px; }
+        .busq-total-val { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; color: var(--rojo); }
+
+        /* ── MODAL RETIRO / INGRESO ── */
+        #modal-movimiento { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 6000; justify-content: center; align-items: center; padding: 16px; }
+        .mov-card { background: var(--blanco); border-radius: 14px; width: 100%; max-width: 360px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+        .mov-header { padding: 13px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .mov-header.retiro  { background: var(--negro); border-bottom: 3px solid #FF5252; }
+        .mov-header.ingreso { background: var(--rojo); border-bottom: 3px solid var(--rojo-dark); }
+        .mov-title { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 900; color: var(--blanco); letter-spacing: 1px; text-transform: uppercase; }
+        .mov-close { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 15px; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+        .mov-body { padding: 14px; }
+        .mov-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+        .mov-tab { flex: 1; padding: 9px 6px; border: 2px solid var(--gris-borde); border-radius: 8px; background: var(--gris-bg); color: var(--gris-mid); cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.15s; }
+        .mov-tab.activo { background: var(--negro); color: var(--blanco); border-color: var(--negro); }
+        .mov-scanner-label { font-size: 9px; color: var(--gris-mid); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 3px; }
+        #mov-scanner { width: 100%; padding: 11px 12px; border-radius: 8px; font-size: 16px; border: 2px solid var(--gris-borde); background: var(--gris-bg); color: var(--texto); text-align: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 2px; margin-bottom: 0; }
+        #mov-scanner:focus { outline: none; border-color: var(--rojo); }
+        #mov-scanner::placeholder { color: #bbb; font-weight: 400; font-size: 13px; letter-spacing: 0; }
+        .mov-manual-inp { width: 100%; padding: 10px 12px; border-radius: 8px; font-size: 14px; border: 2px solid var(--gris-borde); background: var(--gris-bg); color: var(--texto); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; }
+        .mov-manual-inp:focus { outline: none; border-color: var(--rojo); }
+        .mov-manual-inp::placeholder { color: #bbb; font-weight: 400; letter-spacing: 0; font-size: 13px; }
+        .mov-manual-row { display: flex; gap: 6px; margin-bottom: 8px; }
+        .mov-manual-desc { flex: 1; padding: 9px 12px; border-radius: 8px; font-size: 13px; border: 2px solid var(--gris-borde); background: var(--gris-bg); color: var(--texto); font-family: 'Barlow', sans-serif; }
+        .mov-manual-desc:focus { outline: none; border-color: var(--rojo); }
+        .mov-manual-desc::placeholder { color: #bbb; }
+        .mov-manual-cant { width: 80px; padding: 9px 10px; border-radius: 8px; font-size: 14px; border: 2px solid var(--gris-borde); background: var(--gris-bg); color: var(--texto); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-align: center; }
+        .mov-manual-cant:focus { outline: none; border-color: var(--rojo); }
+        .mov-btn-aplicar { width: 100%; padding: 14px; border: none; border-radius: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; margin-top: 10px; transition: filter 0.15s; }
+        .mov-btn-aplicar.retiro  { background: var(--negro); color: white; }
+        .mov-btn-aplicar.ingreso { background: var(--rojo); color: white; }
+        .mov-btn-aplicar:active { filter: brightness(0.85); }
+        .mov-btn-cancelar { width: 100%; padding: 10px; border: none; background: none; color: var(--gris-mid); font-size: 13px; cursor: pointer; margin-top: 4px; font-family: 'Barlow', sans-serif; }
 
         /* ── LOADING OVERLAY ── */
-        #loading-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-            z-index: 8500; flex-direction: column; justify-content: center; align-items: center; gap: 16px;
-        }
-        .spinner {
-            width: 48px; height: 48px; border: 5px solid #333;
-            border-top-color: #3498db; border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
+        #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 8500; flex-direction: column; justify-content: center; align-items: center; gap: 16px; }
+        .spinner { width: 44px; height: 44px; border: 4px solid #2a2a2a; border-top-color: var(--rojo); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        #loading-txt { font-size: 14px; color: #ccc; }
+        #loading-txt { font-size: 13px; color: #aaa; font-family: 'Barlow', sans-serif; }
+
+        /* ── PANEL DESCRIPCIÓN ── */
+        #panel-desc { display: none; margin: 0 8px 4px; background: #fff0f0; border: 1px solid var(--rojo); border-radius: 8px; padding: 6px 12px; flex-shrink: 0; }
+
+        /* ── COMP: botones archivo ── */
+        #comp-file-btns { display: none; gap: 6px; flex-shrink: 0; padding: 2px 0; }
+        .comp-file-btn { flex: 1; padding: 10px 6px; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.3px; text-transform: uppercase; transition: filter 0.15s; }
+        .comp-file-btn:active { filter: brightness(0.85); }
+
+        .scroll::-webkit-scrollbar { width: 4px; }
+        .scroll::-webkit-scrollbar-track { background: #f5f5f5; }
+        .scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+
+        /* ── MODAL CONFIRMACIÓN ── */
+        #modal-confirm { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 6000; padding: 24px; flex-direction: column; justify-content: center; align-items: center; gap: 16px; }
+        .confirm-card { background: var(--blanco); border-radius: 14px; padding: 24px; width: 100%; max-width: 340px; border: 2px solid var(--gris-borde); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+        .confirm-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; color: var(--rojo); text-align: center; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .confirm-msg { font-size: 13px; color: #555; text-align: center; line-height: 1.5; margin-bottom: 16px; }
+        .confirm-btns { display: flex; gap: 8px; }
+        .btn-confirm-yes { flex: 1; padding: 13px; border: none; border-radius: 8px; background: var(--rojo); color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; letter-spacing: 1px; }
+        .btn-confirm-no  { flex: 1; padding: 13px; border: 2px solid var(--gris-borde); border-radius: 8px; background: var(--gris-bg); color: var(--gris-mid); font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+        .module-footer { display: flex; gap: 6px; flex-shrink: 0; padding: 4px 0 2px; }
+        .btn-modulo { flex: 1; padding: 10px 6px; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.5px; text-transform: uppercase; transition: filter 0.15s; }
+        .btn-modulo:active { filter: brightness(0.85); }
+        .btn-guardar-mod  { background: var(--rojo); color: white; }
+        .btn-reset-mod    { background: var(--gris-bg); color: var(--rojo); border: 1px solid var(--rojo); }
+        .btn-reportes-mod { background: var(--negro-soft); color: #ccc; border: 1px solid #333; }
+
+        @keyframes rowNew { from { background: #FFEBEE; } to { background: transparent; } }
+        .fila-nueva { animation: rowNew 1.8s ease forwards; }
     </style>
 </head>
 <body class="modo-comp">
 
 <!-- ══════ SELECTOR ══════ -->
 <div id="pantalla-modo">
-    <div class="logo-modo">🔵 PIEERS AUDITOR PRO</div>
-    <div class="logo-sub">Selecciona el modo de trabajo</div>
+    <div class="logo-modo">⬡ <span class="logo-acento">PIEERS</span> AUDITOR PRO</div>
+    <div class="logo-sub">SELECCIONA EL MODO DE TRABAJO</div>
+    <div class="logo-v">v7.0</div>
     <button class="btn-modo btn-comp" onclick="seleccionarModo('comp')">
         <span class="ico">📋</span>
         <span class="txt">
             <span class="tit">MODO COMPARATIVO</span>
-            <span class="desc">Carga base maestra → pistoleas → detecta FALTA, SOBRA u OK automáticamente.</span>
+            <span class="desc">Carga base maestra → pistoleas → detecta FALTA, SOBRA u OK.</span>
         </span>
     </button>
-    <button class="btn-modo btn-inv" onclick="seleccionarModo('inv')">
-        <span class="ico">📦</span>
+    <button class="btn-modo btn-alm" onclick="seleccionarModo('alm')">
+        <span class="ico">🏪</span>
         <span class="txt">
-            <span class="tit">MODO INVENTARIO</span>
-            <span class="desc">Sin base maestra. Pistola libremente → conteo total por código → exporta Excel/TXT.</span>
+            <span class="tit">MÓDULO ALMACÉN</span>
+            <span class="desc">Carga stock → busca productos → registra retiros e ingresos.</span>
         </span>
     </button>
 </div>
@@ -138,8 +257,8 @@
 <div id="app-principal" class="hidden" style="display:flex;flex-direction:column;height:100vh;">
 
     <div class="header-app">
-        <div style="font-size:13px;color:var(--cm);">
-            PIEERS AUDITOR PRO
+        <div style="display:flex;align-items:center;">
+            <span class="header-logo"><span class="logo-red">P</span>IEERS PRO</span>
             <span class="badge-modo" id="badge-txt">COMPARATIVO</span>
         </div>
         <div style="display:flex;gap:6px;">
@@ -147,53 +266,61 @@
             <button class="btn-menu"   onclick="toggleMenu()">☰ OPC.</button>
         </div>
         <div id="menuContent" class="menu-dropdown">
-            <button id="btn-carga" onclick="document.getElementById('fileInput').click()">📥 CARGAR MAESTRO (EXCEL o TXT)</button>
-            <button onclick="guardarLote()">💾 GUARDAR AUDITORÍA ACTUAL</button>
-            <button onclick="abrirModal('modalLotes')">📂 LOTES GUARDADOS / REPORTES</button>
-            <button onclick="resetearApp()" style="color:#e74c3c">🗑️ RESETEAR TODO</button>
+            <div id="menu-sec-comp" class="menu-section">Comparativo</div>
+            <button id="btn-carga" onclick="document.getElementById('fileInput').click()">📥 Cargar Maestro (Excel o TXT)</button>
+            <button id="btn-stock" onclick="document.getElementById('stockInput').click()">🔄 Convertir Stock → descarga PIEERS</button>
+            <div id="menu-sec-alm" class="menu-section hidden">Almacén</div>
+            <button id="btn-alm-deshacer" onclick="almDeshacer()" class="hidden">↩️ Deshacer último movimiento</button>
+            <button id="btn-alm-guardar" onclick="almGuardarSnapshot()" class="hidden">💾 Guardar estado almacén</button>
+            <button id="btn-alm-exportar" onclick="almExportar()" class="hidden">📊 Exportar almacén (Excel)</button>
+            <div class="menu-section">Sesión</div>
+            <button id="btn-guardar-lote" onclick="guardarLote()">💾 Guardar auditoría actual</button>
+            <button onclick="abrirModal('modalLotes')">📂 Reportes guardados</button>
+            <button onclick="resetearModulo()" class="menu-btn-danger">🗑️ Resetear módulo actual</button>
+            <button onclick="resetearApp()" class="menu-btn-danger">⚠️ Resetear TODO</button>
         </div>
     </div>
 
-    <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls,.txt,.csv">
+    <input type="file" id="fileInput"      class="hidden" accept=".xlsx,.xls,.txt,.csv">
+    <input type="file" id="stockInput"     class="hidden" accept=".csv,.xlsx,.xls">
+    <input type="file" id="almInput"       class="hidden" accept=".csv,.xlsx,.xls">
+    <input type="file" id="almStockInput"  class="hidden" accept=".csv,.xlsx,.xls">
+    <input type="file" id="compStockInput" class="hidden" accept=".csv,.xlsx,.xls">
 
-    <!-- INPUT ESCÁNER — atributos anti-autocorrección para BT -->
-    <input id="scanner"
-           inputmode="none"
-           autocomplete="off"
-           autocorrect="off"
-           autocapitalize="off"
-           spellcheck="false"
-           autofocus
-           placeholder="ESCANEE CÓDIGO"
-           style="padding:9px;font-size:15px;margin:5px auto;">
+    <!-- SCANNER COMPARATIVO -->
+    <input id="scanner" inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autofocus placeholder="ESCANEE CÓDIGO">
 
     <!-- PANEL DESCRIPCIÓN -->
-    <div id="panel-desc" style="display:none;margin:0 10px 5px;background:#1a3a1a;border:1px solid #2ecc71;border-radius:8px;padding:6px 12px;flex-shrink:0;">
+    <div id="panel-desc">
         <span style="font-size:9px;color:#888;text-transform:uppercase;">Descripción — </span>
         <span id="desc-cod" style="font-size:9px;color:#aaa;"></span>
-        <span id="desc-txt" style="font-size:13px;color:#2ecc71;font-weight:bold;display:block;margin-top:1px;"></span>
+        <span id="desc-txt" style="font-size:13px;color:var(--rojo);font-weight:bold;display:block;margin-top:1px;"></span>
     </div>
 
     <div class="progress-box">
         <div class="stats-grid">
             <div style="flex:1" id="blq-esp">
-                <span id="stat-esp" class="stat-val">0</span>
-                <span class="stat-lab">Total Maestro</span>
+                <span id="stat-esp"  class="stat-val">0</span>
+                <span class="stat-lab">Maestro</span>
             </div>
-            <div style="flex:1;border-left:1px solid #333;border-right:1px solid #333;">
+            <div style="flex:1;border-left:1px solid #2a2a2a;border-right:1px solid #2a2a2a;">
                 <span id="stat-cont" class="stat-val">0</span>
-                <span class="stat-lab">Conteo Real</span>
+                <span class="stat-lab">Conteo</span>
             </div>
             <div style="flex:1" id="blq-avan">
                 <span id="stat-avan" class="stat-val">0%</span>
                 <span class="stat-lab">Avance</span>
             </div>
-            <div style="flex:1;border-left:1px solid #333;" id="blq-unic" class="hidden">
-                <span id="stat-unic" class="stat-val">0</span>
-                <span class="stat-lab">Únicos</span>
-            </div>
         </div>
         <div class="bar-bg"><div id="bar-fill"></div></div>
+    </div>
+
+    <!-- Botones archivo COMPARATIVO -->
+    <div id="comp-file-btns" style="display:none;flex-direction:column;gap:4px;margin:0 8px 2px;flex-shrink:0;">
+        <div style="display:flex;gap:6px;">
+            <button class="comp-file-btn" style="background:var(--negro);color:white;" onclick="document.getElementById('fileInput').click()">📥 CARGAR MAESTRO</button>
+            <button class="comp-file-btn" style="background:var(--negro-soft);color:#ccc;border:1px solid #444;" onclick="document.getElementById('compStockInput').click()">🔄 STOCK → MAESTRO</button>
+        </div>
     </div>
 
     <!-- PANEL COMPARATIVO -->
@@ -214,97 +341,220 @@
         </div>
     </div>
 
-    <!-- PANEL INVENTARIO -->
-    <div class="split-view hidden" id="vista-inv">
-        <div class="panel">
-            <div class="panel-h">CONTEO ACUMULADO</div>
-            <div class="scroll">
-                <table><thead><tr><th>CÓDIGO</th><th style="width:50px;">CANT.</th></tr></thead>
-                <tbody id="t-inv"></tbody></table>
-            </div>
-        </div>
-        <div class="panel">
-            <div class="panel-h">FLUJO DE LECTURA</div>
-            <div class="scroll">
-                <table><thead><tr><th style="width:28px;">#</th><th>CÓDIGO</th></tr></thead>
-                <tbody id="t-lect-inv"></tbody></table>
-            </div>
-        </div>
+    <!-- Footer comparativo -->
+    <div id="footer-comp" class="module-footer hidden" style="padding:2px 8px 6px;">
+        <button class="btn-modulo btn-guardar-mod" onclick="guardarLote()">💾 GUARDAR</button>
+        <button class="btn-modulo btn-reportes-mod" onclick="abrirModal('modalLotes')">📂 REPORTES</button>
+        <button class="btn-modulo btn-reset-mod" onclick="resetearModulo()">🗑️ RESETEAR</button>
     </div>
 
     <!-- OVERLAY ERROR -->
     <div id="overlay-error">
-        <h1 style="color:white;font-size:60px;margin:0;">⚠️</h1>
-        <div id="msg-error" style="color:white;font-size:18px;margin:20px;font-weight:bold;word-break:break-all;"></div>
-        <button onclick="desbloquear()" style="background:#f1c40f;color:black;padding:18px;border:none;border-radius:10px;width:80%;font-weight:bold;font-size:18px;">✅ CORREGIR</button>
+        <h1 style="color:white;font-size:56px;margin:0;">⚠️</h1>
+        <div id="msg-error" style="color:white;font-size:17px;margin:20px;font-weight:bold;word-break:break-all;font-family:'Barlow Condensed',sans-serif;"></div>
+        <button onclick="desbloquear()" style="background:#f1c40f;color:#111;padding:16px;border:none;border-radius:10px;width:80%;font-weight:bold;font-size:17px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;">✅ CORREGIR</button>
     </div>
 
     <!-- MODAL LOTES -->
     <div id="modalLotes" class="modal">
-        <h2 style="color:var(--cm);text-align:center;margin-bottom:12px;">REPORTES GUARDADOS</h2>
+        <div class="modal-title" id="modal-lotes-title">REPORTES GUARDADOS</div>
         <div id="listaLotes" style="flex:1;overflow-y:auto;"></div>
-        <button onclick="cerrarModal('modalLotes')" style="background:#e74c3c;color:white;padding:14px;border:none;border-radius:10px;width:100%;margin-top:10px;font-size:13px;">← VOLVER</button>
+        <button onclick="cerrarModal('modalLotes')" style="background:var(--rojo);color:white;padding:14px;border:none;border-radius:10px;width:100%;margin-top:10px;font-size:14px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;">← VOLVER</button>
     </div>
 
-    <!-- LOADING OVERLAY -->
-    <div id="loading-overlay">
-        <div class="spinner"></div>
-        <div id="loading-txt">Cargando...</div>
+    <!-- ══════ PANEL ALMACÉN v7 ══════ -->
+    <div class="split-view hidden" id="vista-alm">
+
+        <!-- Barra 3 botones -->
+        <div class="alm-action-bar">
+            <button class="alm-btn-buscar" onclick="abrirModalBusqueda()">🔍 BUSCAR</button>
+            <button class="alm-btn-retiro activo" id="tab-retiro"  onclick="almSetModoYAbrir('retiro')">− RETIRO</button>
+            <button class="alm-btn-ingreso"        id="tab-ingreso" onclick="almSetModoYAbrir('ingreso')">+ INGRESO</button>
+        </div>
+
+        <!-- Badge -->
+        <div id="alm-estado-badge">Sin inventario — carga stock con los botones de abajo</div>
+
+        <!-- Carga -->
+        <div class="alm-load-row">
+            <button class="alm-load-btn" style="background:var(--negro);color:var(--blanco);" onclick="document.getElementById('almInput').click()">📥 CARGAR INV.</button>
+            <button class="alm-load-btn" style="background:var(--gris-bg);color:var(--negro);border:1px solid var(--gris-borde);" onclick="document.getElementById('almStockInput').click()">🔄 STOCK → ALM.</button>
+        </div>
+
+        <!-- Filtro rápido -->
+        <div style="display:flex;gap:5px;flex-shrink:0;">
+            <input type="text" id="alm-filtro-rapido" placeholder="Filtrar lista..." oninput="renderAlm(this.value.trim().toUpperCase())" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
+
+        <!-- Tabla inventario -->
+        <div class="panel" style="flex:1;">
+            <div class="panel-h" id="alm-panel-titulo">INVENTARIO ALMACÉN</div>
+            <div class="scroll">
+                <table>
+                    <thead><tr>
+                        <th style="width:34%;">CÓDIGO</th>
+                        <th>DESCRIPCIÓN</th>
+                        <th style="width:14%;">STOCK</th>
+                    </tr></thead>
+                    <tbody id="t-alm"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Historial movimientos -->
+        <div class="panel" style="max-height:120px;flex-shrink:0;">
+            <div class="panel-h">ÚLTIMOS MOVIMIENTOS</div>
+            <div class="scroll">
+                <table>
+                    <thead><tr>
+                        <th style="width:26px;">#</th>
+                        <th>CÓDIGO</th>
+                        <th style="width:30px;">MOV</th>
+                        <th style="width:40px;">STOCK</th>
+                    </tr></thead>
+                    <tbody id="t-alm-mov"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer almacén -->
+        <div class="alm-footer-row">
+            <button class="alm-footer-btn" style="background:var(--gris-bg);color:#E65100;border:1px solid #E65100;" onclick="almDeshacer()">↩️ DESHACER</button>
+            <button class="alm-footer-btn" style="background:var(--negro);color:white;" onclick="almGuardarSnapshot()">💾 GUARDAR</button>
+            <button class="alm-footer-btn" style="background:var(--gris-bg);color:#2E7D32;border:1px solid #2E7D32;" onclick="almExportar()">📊 EXCEL</button>
+            <button class="alm-footer-btn" style="background:var(--gris-bg);color:var(--rojo);border:1px solid var(--rojo);" onclick="resetearModulo()">🗑️ RESET</button>
+        </div>
     </div>
+
+    <!-- LOADING -->
+    <div id="loading-overlay"><div class="spinner"></div><div id="loading-txt">Cargando...</div></div>
 
     <!-- TOAST -->
     <div id="toast"></div>
 
+    <!-- MODAL CONFIRMACIÓN -->
+    <div id="modal-confirm">
+        <div class="confirm-card">
+            <div class="confirm-title" id="confirm-title">Confirmar</div>
+            <div class="confirm-msg" id="confirm-msg">¿Estás seguro?</div>
+            <div class="confirm-btns">
+                <button class="btn-confirm-yes" id="btn-confirm-yes">SÍ, CONFIRMAR</button>
+                <button class="btn-confirm-no"  onclick="cerrarConfirm()">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
 </div><!-- fin app-principal -->
+
+<!-- ══════ MODAL BÚSQUEDA ALMACÉN ══════ -->
+<div id="modal-busqueda">
+    <div class="busq-card">
+        <div class="busq-header">
+            <span class="busq-title">🔍 BÚSQUEDA</span>
+            <button class="busq-close" onclick="cerrarModalBusqueda()">✕</button>
+        </div>
+        <div class="busq-body">
+            <span class="busq-label">Tipo de búsqueda</span>
+            <select class="busq-select" id="busq-tipo" onchange="onBusqTipoChange()">
+                <option value="codigo13">Lectura Código (13 dígitos)</option>
+                <option value="codigo7">Artículo 7 dígitos</option>
+                <option value="nombre">Nombre del producto</option>
+            </select>
+            <div class="busq-input-row">
+                <input type="text" id="busq-input" placeholder="Ingrese dato..." oninput="ejecutarBusqueda()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <button class="busq-btn-ok" onclick="ejecutarBusqueda()">IR</button>
+            </div>
+            <div id="busq-resultados">
+                <div class="busq-empty">Escribe para buscar un producto</div>
+            </div>
+        </div>
+        <div class="busq-footer">
+            <span class="busq-total-label">PRODUCTO</span>
+            <span class="busq-total-val" id="busq-count">0</span>
+        </div>
+    </div>
+</div>
+
+<!-- ══════ MODAL RETIRO / INGRESO ══════ -->
+<div id="modal-movimiento">
+    <div class="mov-card">
+        <div class="mov-header retiro" id="mov-header-bar">
+            <span class="mov-title" id="mov-modal-title">RETIRAR STOCK</span>
+            <button class="mov-close" onclick="cerrarModalMovimiento()">✕</button>
+        </div>
+        <div class="mov-body">
+            <div class="mov-tabs">
+                <button class="mov-tab activo" id="mov-tab-lectora" onclick="movSetInputMode('lectora')">LECTORA (13)</button>
+                <button class="mov-tab"        id="mov-tab-manual"  onclick="movSetInputMode('manual')">MANUAL</button>
+            </div>
+
+            <!-- Modo lectora -->
+            <div id="mov-modo-lectora">
+                <span class="mov-scanner-label">📡 PISTOLA BT — Escanea aquí</span>
+                <input type="text" id="mov-scanner" inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Esperando...">
+            </div>
+
+            <!-- Modo manual -->
+            <div id="mov-modo-manual" style="display:none;">
+                <input type="text" class="mov-manual-inp" id="mov-manual-cod" placeholder="Código del producto..." autocomplete="off" autocorrect="off" autocapitalize="off">
+                <div class="mov-manual-row">
+                    <input type="text" class="mov-manual-desc" id="mov-manual-desc" placeholder="Descripción (si no existe)..." autocomplete="off" autocorrect="off">
+                    <input type="number" class="mov-manual-cant" id="mov-manual-cant" placeholder="Cant" min="1" value="1">
+                </div>
+            </div>
+
+            <button class="mov-btn-aplicar retiro" id="mov-btn-aplicar" onclick="aplicarMovimientoManual()">APLICAR</button>
+            <button class="mov-btn-cancelar" onclick="cerrarModalMovimiento()">Cancelar</button>
+        </div>
+    </div>
+</div>
 
 <script>
 'use strict';
 
-// ═══════════════════════════════════════════════════════
-//  CONSTANTES
-// ═══════════════════════════════════════════════════════
-const MAX_FILAS_DOM  = 60;   // máximo de filas que se renderizan en pantalla
-const SAVE_DEBOUNCE  = 1500; // ms entre guardados al localStorage
-const CHUNK_SIZE     = 500;  // filas a procesar por tick al cargar maestro
+const MAX_FILAS_DOM = 60;
+const SAVE_DEBOUNCE = 1500;
+const CHUNK_SIZE    = 500;
 
-// ═══════════════════════════════════════════════════════
-//  ESTADO GLOBAL
-// ═══════════════════════════════════════════════════════
-let modoActual = null; // 'comp' | 'inv'
+// Estado global
+let modoActual     = null;
+let descripcionMap = new Map();
+let maestroMap     = new Map();
+let historial      = [];
+let lotes          = [];
+let totalEsp       = 0;
+let almMap         = new Map();
+let almMovs        = [];
+let almModo        = 'retiro';
+let almSnapshots   = [];
+let movInputMode   = 'lectora';
+let bloqueado      = false;
+let saveTimer      = null;
+let renderPending  = false;
 
-// — COMPARATIVO —
-let descripcionMap = new Map(); // código → descripción
-let maestroMap    = new Map();
-let historial     = [];
-let lotes         = [];
-let totalEsp      = 0;
-
-// — INVENTARIO —
-let invHistorial  = [];
-let invLotes      = [];
-let invConteo     = new Map(); // código → cantidad
-
-// — CONTROL —
-let bloqueado     = false;
-let saveTimer     = null;   // debounce para localStorage
-let renderPending = false;  // evita renders duplicados
-
-// ═══════════════════════════════════════════════════════
-//  AUDIO
-// ═══════════════════════════════════════════════════════
-let audioCtx = null;
-function getAudio() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    return audioCtx;
+// ── CONFIRM MODAL ──
+let confirmCallback = null;
+function mostrarConfirm(titulo, msg, cb) {
+    document.getElementById('confirm-title').textContent = titulo;
+    document.getElementById('confirm-msg').textContent   = msg;
+    confirmCallback = cb;
+    document.getElementById('modal-confirm').style.display = 'flex';
 }
+function cerrarConfirm() {
+    document.getElementById('modal-confirm').style.display = 'none';
+    confirmCallback = null;
+}
+document.getElementById('btn-confirm-yes').addEventListener('click', () => {
+    cerrarConfirm(); if (confirmCallback) confirmCallback();
+});
+
+// ── AUDIO ──
+let audioCtx = null;
+function getAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
 function beep(freq, dur, type='square') {
     try {
-        const ctx = getAudio();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.type = type;
-        o.frequency.value = freq;
+        const ctx = getAudio(), o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination); o.type = type; o.frequency.value = freq;
         g.gain.setValueAtTime(0.06, ctx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
         o.start(); o.stop(ctx.currentTime + dur);
@@ -313,62 +563,58 @@ function beep(freq, dur, type='square') {
 function beepOK()    { beep(1046, 0.07); }
 function beepError() { beep(220, 0.45, 'sawtooth'); }
 
-// ═══════════════════════════════════════════════════════
-//  TOAST
-// ═══════════════════════════════════════════════════════
+// ── TOAST ──
 let toastTimer = null;
-function showToast(msg, color='#2471a3') {
+function showToast(msg, color='#111') {
     const t = document.getElementById('toast');
     t.textContent = msg; t.style.background = color; t.style.display = 'block';
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.style.display='none', 2500);
+    toastTimer = setTimeout(() => t.style.display='none', 2800);
 }
 
-// ═══════════════════════════════════════════════════════
-//  LOADING OVERLAY
-// ═══════════════════════════════════════════════════════
-function showLoading(msg) {
-    document.getElementById('loading-txt').textContent = msg;
-    document.getElementById('loading-overlay').style.display = 'flex';
-}
-function hideLoading() {
-    document.getElementById('loading-overlay').style.display = 'none';
-}
+// ── LOADING ──
+function showLoading(msg) { document.getElementById('loading-txt').textContent = msg; document.getElementById('loading-overlay').style.display = 'flex'; }
+function hideLoading()     { document.getElementById('loading-overlay').style.display = 'none'; }
 
-// ═══════════════════════════════════════════════════════
-//  SELECTOR DE MODO
-// ═══════════════════════════════════════════════════════
+// ── SELECTOR MODO ──
 function seleccionarModo(modo) {
     modoActual = modo;
     document.getElementById('pantalla-modo').style.display = 'none';
     document.getElementById('app-principal').classList.remove('hidden');
+    document.getElementById('vista-comp').classList.add('hidden');
+    document.getElementById('vista-alm').classList.add('hidden');
+    document.getElementById('footer-comp').classList.add('hidden');
+    document.getElementById('comp-file-btns').style.display = 'none';
+    ['btn-carga','btn-stock'].forEach(id => document.getElementById(id).style.display = 'none');
+    document.getElementById('menu-sec-alm').classList.add('hidden');
+    document.getElementById('menu-sec-comp').classList.add('hidden');
+    ['btn-alm-deshacer','btn-alm-guardar','btn-alm-exportar'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.getElementById('btn-guardar-lote').style.display = 'block';
+    document.getElementById('scanner').style.display = modo === 'alm' ? 'none' : '';
+    document.getElementById('panel-desc').style.display = 'none';
+    document.querySelector('.progress-box').style.display = modo === 'alm' ? 'none' : '';
 
     if (modo === 'comp') {
         document.body.className = 'modo-comp';
         document.getElementById('badge-txt').textContent = 'COMPARATIVO';
-        document.getElementById('btn-carga').style.display = 'block';
+        document.getElementById('menu-sec-comp').classList.remove('hidden');
+        ['btn-carga','btn-stock'].forEach(id => document.getElementById(id).style.display = 'block');
         document.getElementById('vista-comp').classList.remove('hidden');
-        document.getElementById('vista-inv').classList.add('hidden');
+        document.getElementById('footer-comp').classList.remove('hidden');
+        document.getElementById('comp-file-btns').style.display = 'flex';
         document.getElementById('blq-esp').style.display  = '';
         document.getElementById('blq-avan').style.display = '';
-        document.getElementById('blq-unic').classList.add('hidden');
         document.getElementById('scanner').placeholder = 'ESCANEE CÓDIGO (13 DÍGITOS)';
-        loadStateComp();
-        renderComp();
+        loadStateComp(); renderComp(); focusScanner();
     } else {
-        document.body.className = 'modo-inv';
-        document.getElementById('badge-txt').textContent = 'INVENTARIO';
-        document.getElementById('btn-carga').style.display = 'none';
-        document.getElementById('vista-comp').classList.add('hidden');
-        document.getElementById('vista-inv').classList.remove('hidden');
-        document.getElementById('blq-esp').style.display  = 'none';
-        document.getElementById('blq-avan').style.display = 'none';
-        document.getElementById('blq-unic').classList.remove('hidden');
-        document.getElementById('scanner').placeholder = 'ESCANEE CUALQUIER CÓDIGO';
-        loadStateInv();
-        renderInv();
+        document.body.className = 'modo-alm';
+        document.getElementById('badge-txt').textContent = 'ALMACÉN';
+        document.getElementById('menu-sec-alm').classList.remove('hidden');
+        ['btn-alm-deshacer','btn-alm-guardar','btn-alm-exportar'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+        document.getElementById('btn-guardar-lote').style.display = 'none';
+        document.getElementById('vista-alm').classList.remove('hidden');
+        loadStateAlm(); renderAlm();
     }
-    focusScanner();
 }
 
 function volverSelector() {
@@ -377,653 +623,719 @@ function volverSelector() {
     modoActual = null;
 }
 
-// ═══════════════════════════════════════════════════════
-//  ESCÁNER BLUETOOTH — LÓGICA ROBUSTA
-//
-//  Las lectoras BT envían caracteres uno a uno como si
-//  fuera teclado, terminando con Enter (keyCode 13).
-//  Usamos keydown para capturar Enter y también un
-//  timeout de seguridad para cuando no hay Enter.
-//  Evitamos el evento "input" que puede dispararse
-//  varias veces en Android/iOS con BT.
-// ═══════════════════════════════════════════════════════
+// ── SCANNER COMPARATIVO ──
 const scannerEl = document.getElementById('scanner');
-let bufferBT    = '';   // buffer acumulador
-let flushTimer  = null; // timer de seguridad
-
+let bufferBT = '', flushTimer = null;
 function flushBuffer() {
     clearTimeout(flushTimer);
-    const cod = bufferBT.trim();
-    bufferBT = '';
-    scannerEl.value = '';
-    if (!cod) return;
-    procesarCodigo(cod);
+    const cod = bufferBT.trim(); bufferBT = ''; scannerEl.value = '';
+    if (cod) procesarCodigo(cod);
 }
-
-// KEYDOWN: detecta Enter (fin de código en lectoras BT)
 scannerEl.addEventListener('keydown', function(e) {
     if (bloqueado) { e.preventDefault(); return; }
-
-    if (e.key === 'Enter' || e.keyCode === 13) {
-        e.preventDefault();
-        // Tomar el valor actual del input + buffer acumulado
-        bufferBT = (scannerEl.value || '') + bufferBT.replace(scannerEl.value || '', '');
-        bufferBT = scannerEl.value.trim() || bufferBT.trim();
-        flushBuffer();
-        return;
-    }
+    if (e.key === 'Enter') { e.preventDefault(); bufferBT = scannerEl.value.trim() || bufferBT.trim(); flushBuffer(); }
 });
-
-// INPUT: acumula caracteres y programa flush de seguridad (80ms sin más input)
 scannerEl.addEventListener('input', function() {
     if (bloqueado) { scannerEl.value=''; return; }
     bufferBT = scannerEl.value;
     clearTimeout(flushTimer);
-    // Flush automático si el código ya tiene ≥8 chars y pasaron 80ms sin más input
-    // Esto cubre lectoras que NO envían Enter
-    flushTimer = setTimeout(() => {
-        if (bufferBT.length >= 4) flushBuffer();
-        else { bufferBT=''; scannerEl.value=''; }
-    }, 80);
+    flushTimer = setTimeout(() => { if (bufferBT.length >= 4) flushBuffer(); else { bufferBT=''; scannerEl.value=''; } }, 80);
 });
 
 function procesarCodigo(cod) {
-    if (!cod || !modoActual) return;
-
-    if (modoActual === 'comp') {
-        if (cod.length === 13) {
-            historial.push(cod);
-            if (maestroMap.has(cod)) maestroMap.get(cod).real++;
-            else maestroMap.set(cod, { exp:0, real:1 });
-            schedSave('comp');
-            schedRender('comp', cod);
-            beepOK();
-        } else {
-            mostrarError(cod, 'COMP: Se esperan 13 dígitos');
-        }
-    } else {
-        if (cod.length === 13) {
-            invHistorial.push(cod);
-            invConteo.set(cod, (invConteo.get(cod) || 0) + 1);
-            schedSave('inv');
-            schedRender('inv', cod);
-            beepOK();
-        } else {
-            mostrarError(cod, 'Se esperan exactamente 13 dígitos');
-        }
-    }
+    if (!cod || modoActual !== 'comp') return;
+    if (cod.length === 13) {
+        historial.push(cod);
+        if (maestroMap.has(cod)) maestroMap.get(cod).real++;
+        else maestroMap.set(cod, { exp:0, real:1 });
+        schedSave('comp'); schedRender('comp', cod); beepOK();
+    } else { mostrarError(cod, 'COMP: Se esperan 13 dígitos'); }
 }
 
 function mostrarError(cod, detalle) {
     bloqueado = true;
-    document.getElementById('msg-error').textContent =
-        `⛔ ${detalle}\n"${cod}" (${cod.length} car.)`;
+    document.getElementById('msg-error').textContent = `⛔ ${detalle}\n"${cod}" (${cod.length} car.)`;
     document.getElementById('overlay-error').style.display = 'flex';
     beepError();
 }
 
-// ═══════════════════════════════════════════════════════
-//  DEBOUNCE DE GUARDADO — evita serializar 19k ítems
-//  en cada scan; guarda como máximo cada SAVE_DEBOUNCE ms
-// ═══════════════════════════════════════════════════════
-function schedSave(modo) {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-        if (modo === 'comp') saveComp();
-        else saveInv();
-    }, SAVE_DEBOUNCE);
-}
-
-// Guardado inmediato (al guardar lote, al salir)
+// ── SAVE ──
+function schedSave(m) { clearTimeout(saveTimer); saveTimer = setTimeout(() => { if (m==='comp') saveComp(); }, SAVE_DEBOUNCE); }
 function saveComp() {
     try {
         localStorage.setItem('p_maestro_v8', JSON.stringify(Object.fromEntries(maestroMap)));
         localStorage.setItem('p_hist_v8',    JSON.stringify(historial));
         localStorage.setItem('p_total_v8',   totalEsp);
-        if (descripcionMap.size > 0)
-            localStorage.setItem('p_desc_v8', JSON.stringify(Object.fromEntries(descripcionMap)));
-    } catch(e) { showToast('⚠️ Error al guardar (sin espacio)', '#e74c3c'); }
+        if (descripcionMap.size > 0) localStorage.setItem('p_desc_v8', JSON.stringify(Object.fromEntries(descripcionMap)));
+    } catch(e) { showToast('⚠️ Error al guardar', '#c62828'); }
 }
-function saveInv() {
-    try {
-        localStorage.setItem('p_inv_hist_v8', JSON.stringify(invHistorial));
-    } catch(e) { showToast('⚠️ Error al guardar (sin espacio)', '#e74c3c'); }
-}
-function saveLotes() {
-    try {
-        localStorage.setItem('p_lotes_v8',     JSON.stringify(lotes));
-        localStorage.setItem('p_inv_lotes_v8', JSON.stringify(invLotes));
-    } catch(e) {}
-}
+function saveLotes() { try { localStorage.setItem('p_lotes_v8', JSON.stringify(lotes)); } catch(e) {} }
 
-// ═══════════════════════════════════════════════════════
-//  CARGA DE ESTADO
-// ═══════════════════════════════════════════════════════
+// ── LOAD STATE ──
 function loadStateComp() {
-    historial    = JSON.parse(localStorage.getItem('p_hist_v8')    || '[]');
-    lotes        = JSON.parse(localStorage.getItem('p_lotes_v8')   || '[]');
-    totalEsp     = parseInt(localStorage.getItem('p_total_v8'))    || 0;
+    historial = JSON.parse(localStorage.getItem('p_hist_v8')  || '[]');
+    lotes     = JSON.parse(localStorage.getItem('p_lotes_v8') || '[]');
+    totalEsp  = parseInt(localStorage.getItem('p_total_v8'))  || 0;
     const m = localStorage.getItem('p_maestro_v8');
-    if (m) {
-        maestroMap = new Map(Object.entries(JSON.parse(m)));
-    }
-    // Re-sync por si el historial difiere del mapa
+    if (m) maestroMap = new Map(Object.entries(JSON.parse(m)));
     if (historial.length > 0 && maestroMap.size > 0) syncConteo();
     const d = localStorage.getItem('p_desc_v8');
     if (d) descripcionMap = new Map(Object.entries(JSON.parse(d)));
 }
-
-function loadStateInv() {
-    invHistorial = JSON.parse(localStorage.getItem('p_inv_hist_v8')  || '[]');
-    invLotes     = JSON.parse(localStorage.getItem('p_inv_lotes_v8') || '[]');
-    // Reconstruir mapa de conteo desde historial
-    invConteo = new Map();
-    invHistorial.forEach(c => invConteo.set(c, (invConteo.get(c)||0)+1));
-}
-
 function syncConteo() {
     maestroMap.forEach(v => v.real = 0);
-    historial.forEach(c => {
-        if (maestroMap.has(c)) maestroMap.get(c).real++;
-        else maestroMap.set(c, { exp:0, real:1 });
-    });
+    historial.forEach(c => { if (maestroMap.has(c)) maestroMap.get(c).real++; else maestroMap.set(c, {exp:0,real:1}); });
 }
 
-// ═══════════════════════════════════════════════════════
-//  CARGA MAESTRO — por chunks para no bloquear UI
-// ═══════════════════════════════════════════════════════
+// ── FILE INPUTS COMPARATIVO ──
 document.getElementById('fileInput').addEventListener('change', function(e) {
-    const f = e.target.files[0];
-    if (!f) return;
+    const f = e.target.files[0]; if (!f) return;
     const ext = f.name.split('.').pop().toLowerCase();
     const reader = new FileReader();
     showLoading('Leyendo archivo...');
-
     reader.onload = function(evt) {
         maestroMap.clear(); totalEsp = 0;
-
         if (ext === 'xlsx' || ext === 'xls') {
-            // XLSX: parsear en worker simulado con setTimeout
             setTimeout(() => {
                 try {
-                    showLoading('Procesando Excel...');
-                    const wb   = XLSX.read(new Uint8Array(evt.target.result), { type:'array', dense:true });
-                    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval:'' });
-                    procesarFilasMaestro(rows, 0);
-                } catch(err) {
-                    hideLoading();
-                    showToast('❌ Error leyendo Excel: ' + err.message, '#e74c3c');
-                }
+                    const wb = XLSX.read(new Uint8Array(evt.target.result), {type:'array',dense:true});
+                    procesarFilasMaestro(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:''}), 0);
+                } catch(err) { hideLoading(); showToast('❌ '+err.message, '#c62828'); }
             }, 30);
         } else {
             setTimeout(() => {
-                showLoading('Procesando TXT/CSV...');
-                const lines = evt.target.result.split('\n');
-                const rows  = lines.map(line => {
-                    const p = line.split(/[;,|]/);
-                    return { _cod: (p[0]||'').trim(), _stock: parseInt(p[1])||0 };
-                }).filter(r => r._cod.length >= 4);
+                const rows = evt.target.result.split('\n').map(l => { const p = l.split(/[;,|]/); return {_cod:(p[0]||'').trim(),_stock:parseInt(p[1])||0}; }).filter(r => r._cod.length >= 4);
                 procesarFilasMaestro(rows, 0, true);
             }, 30);
         }
     };
-
-    if (ext === 'xlsx' || ext === 'xls') reader.readAsArrayBuffer(f);
-    else reader.readAsText(f);
-    e.target.value = ''; // reset para permitir recargar mismo archivo
+    if (ext === 'xlsx' || ext === 'xls') reader.readAsArrayBuffer(f); else reader.readAsText(f);
+    e.target.value = '';
 });
 
-function procesarFilasMaestro(rows, offset, isTxt=false) {
-    const end = Math.min(offset + CHUNK_SIZE, rows.length);
+document.getElementById('stockInput').addEventListener('change', function(e) {
+    const f = e.target.files[0]; if (!f) return;
+    const ext = f.name.split('.').pop().toLowerCase();
+    const reader = new FileReader();
+    showLoading('Leyendo stock...');
+    reader.onload = function(evt) {
+        setTimeout(() => {
+            try {
+                let rows;
+                if (ext === 'xlsx' || ext === 'xls') { const wb = XLSX.read(new Uint8Array(evt.target.result),{type:'array',dense:true}); rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:'',header:1}); convertirStockDesdeFilas(rows); }
+                else { convertirStockDesdeFilas(parsearCSV(evt.target.result)); }
+            } catch(err) { hideLoading(); showToast('❌ '+err.message,'#c62828'); }
+        }, 30);
+    };
+    if (ext === 'xlsx' || ext === 'xls') reader.readAsArrayBuffer(f); else reader.readAsText(f);
+    e.target.value = '';
+});
 
-    for (let i = offset; i < end; i++) {
-        const row = rows[i];
-        let cod, stock, desc = '';
+document.getElementById('compStockInput').addEventListener('change', function(e) {
+    const f = e.target.files[0]; if (!f) return;
+    const ext = f.name.split('.').pop().toLowerCase();
+    const reader = new FileReader();
+    showLoading('Convirtiendo stock...');
+    reader.onload = function(evt) {
+        setTimeout(() => {
+            try {
+                let filas;
+                if (ext === 'xlsx' || ext === 'xls') { const wb = XLSX.read(new Uint8Array(evt.target.result),{type:'array',dense:true}); filas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:'',header:1}); }
+                else { filas = parsearCSV(evt.target.result); }
+                const res = convertirStockAResultados(filas);
+                if (!res.length) { hideLoading(); showToast('⚠️ Sin productos válidos','#E65100'); return; }
+                maestroMap.clear(); totalEsp = 0;
+                res.forEach(r => { const c=r.codigoUnico.toUpperCase(); maestroMap.set(c,{exp:r.cantidad,real:0}); if(r.descripcion) descripcionMap.set(c,r.descripcion); totalEsp+=r.cantidad; });
+                if (historial.length > 0) syncConteo();
+                localStorage.setItem('p_total_v8', totalEsp);
+                saveComp(); hideLoading(); toggleMenu(); beep(880,0.1);
+                showToast(`✅ ${res.length.toLocaleString()} productos cargados`,'#111');
+                renderComp(); focusScanner();
+            } catch(err) { hideLoading(); showToast('❌ '+err.message,'#c62828'); }
+        }, 30);
+    };
+    if (ext === 'xlsx' || ext === 'xls') reader.readAsArrayBuffer(f); else reader.readAsText(f);
+    e.target.value = '';
+});
 
-        if (isTxt) {
-            cod   = row._cod;
-            stock = row._stock;
-        } else {
-            // Excel: intentar detectar columna de código, descripción y stock
-            const vals = Object.values(row);
-            cod   = String(row.codigo || row.CODIGO || row.Codigo ||
-                           row.code   || row.CODE   || vals[0] || '').trim();
-            desc  = String(row.descripcion || row.DESCRIPCION || row.Descripcion ||
-                           row.description || row.DESCRIPTION || row.desc || row.DESC ||
-                           vals[1] || '').trim();
-            // Si la segunda columna es numérica es stock, no descripción
-            if (!isNaN(desc) && desc !== '') { stock = parseInt(desc)||0; desc = ''; }
-            else stock = parseInt(row.stock || row.STOCK || row.cantidad ||
-                             row.CANTIDAD || row.qty || vals[2]) || 0;
-        }
+// ── ALMACÉN SAVE/LOAD ──
+function saveAlm() {
+    try {
+        localStorage.setItem('p_alm_v1', JSON.stringify(Object.fromEntries([...almMap.entries()])));
+        localStorage.setItem('p_alm_movs_v1', JSON.stringify(almMovs.slice(-200)));
+    } catch(e) {}
+}
+function loadStateAlm() {
+    try {
+        const m = localStorage.getItem('p_alm_v1'); if (m) almMap = new Map(Object.entries(JSON.parse(m)));
+        const mv = localStorage.getItem('p_alm_movs_v1'); if (mv) almMovs = JSON.parse(mv);
+        const sn = localStorage.getItem('p_alm_snaps_v1'); if (sn) almSnapshots = JSON.parse(sn);
+    } catch(e) {}
+}
 
-        if (cod && cod.length >= 4 && cod !== 'undefined') {
-            maestroMap.set(cod, { exp: stock, real: 0 });
-            if (desc) descripcionMap.set(cod, desc);
-            totalEsp += stock;
-        }
+// ── MODO RETIRO/INGRESO ──
+function almSetModo(m) {
+    almModo = m;
+    document.getElementById('tab-retiro').classList.toggle('activo',  m==='retiro');
+    document.getElementById('tab-ingreso').classList.toggle('activo', m==='ingreso');
+}
+function almSetModoYAbrir(m) {
+    almSetModo(m);
+    abrirModalMovimiento();
+}
+
+// ── RENDER ALMACÉN ──
+function renderAlm(filtro='') {
+    const tbody = document.getElementById('t-alm');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const badge = document.getElementById('alm-estado-badge');
+    if (almMap.size === 0) {
+        badge.textContent = 'Sin inventario — carga con los botones de arriba';
+        badge.style.color = '#c62828';
+    } else {
+        const total = [...almMap.values()].reduce((a,v)=>a+v.stock,0);
+        badge.textContent = `${almMap.size.toLocaleString()} códigos | ${total.toLocaleString()} unidades`;
+        badge.style.color = '#D32F2F';
     }
 
-    if (end < rows.length) {
-        const pct = Math.round((end / rows.length) * 100);
-        showLoading(`Cargando maestro... ${pct}% (${end.toLocaleString()} / ${rows.length.toLocaleString()})`);
-        setTimeout(() => procesarFilasMaestro(rows, end, isTxt), 0);
-    } else {
-        // Terminó — sincronizar conteos existentes y guardar
-        if (historial.length > 0) syncConteo();
-        localStorage.setItem('p_total_v8', totalEsp);
-        saveComp();
-        hideLoading();
-        toggleMenu();
-        beep(880, 0.1);
-        showToast(`✅ Maestro cargado: ${maestroMap.size.toLocaleString()} códigos`, '#1e8449');
-        renderComp();
-        focusScanner();
+    let entries = [...almMap.entries()];
+    if (filtro) {
+        entries = entries.filter(([k,v]) => {
+            if (/^\d{1,7}$/.test(filtro)) return k.includes(filtro);
+            return k.includes(filtro) || (v.desc||'').toUpperCase().includes(filtro);
+        });
+    }
+
+    // Más recientes al tope
+    const recentSet = new Set(almMovs.slice(-30).map(m => m.cod));
+    entries.sort((a,b) => {
+        const aR = recentSet.has(a[0]) ? 1 : 0;
+        const bR = recentSet.has(b[0]) ? 1 : 0;
+        if (aR !== bR) return bR - aR;
+        return b[1].stock - a[1].stock;
+    });
+
+    const frag = document.createDocumentFragment();
+    entries.slice(0, 80).forEach(([cod, v]) => {
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        if (recentSet.has(cod)) tr.classList.add('fila-nueva');
+        const stockColor = v.stock === 0 ? '#B71C1C' : v.stock <= 2 ? '#E65100' : '#1B5E20';
+        if (v.stock === 0) tr.style.background = '#FFF8E1';
+        tr.innerHTML = `<td style="font-size:10px;word-break:break-all;color:#333;text-align:left;padding:6px 4px;">${cod}</td>
+                        <td style="font-size:10px;color:#444;text-align:left;padding:6px 4px;line-height:1.3;">${v.desc||''}</td>
+                        <td style="font-weight:bold;color:${stockColor};font-size:15px;">${v.stock}</td>`;
+        tr.addEventListener('click', () => abrirModalMovimiento(cod));
+        frag.appendChild(tr);
+    });
+    tbody.appendChild(frag);
+
+    if (entries.length > 80) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="3" style="text-align:center;color:#999;font-size:10px;padding:8px;">... y ${entries.length-80} más. Refina el filtro.</td>`;
+        tbody.appendChild(tr);
+    }
+
+    // Historial — más reciente primero
+    const tmov = document.getElementById('t-alm-mov');
+    if (tmov) {
+        tmov.innerHTML = '';
+        const fragM = document.createDocumentFragment();
+        almMovs.slice(-20).reverse().forEach((mv, i) => {
+            const tr = document.createElement('tr');
+            const color = mv.tipo==='RETIRO' ? '#B71C1C' : '#1B5E20';
+            tr.innerHTML = `<td>${almMovs.length-i}</td>
+                <td style="font-size:10px;text-align:left;padding:4px;">${mv.cod}</td>
+                <td style="color:${color};font-size:12px;font-weight:bold;">${mv.tipo==='RETIRO'?'−':'+'}</td>
+                <td style="font-weight:bold;">${mv.stockPost}</td>`;
+            fragM.appendChild(tr);
+        });
+        tmov.appendChild(fragM);
     }
 }
 
-// ═══════════════════════════════════════════════════════
-//  RENDER CON requestAnimationFrame — sin bloquear UI
-//  Solo renderiza MAX_FILAS_DOM filas (virtual scroll simple)
-// ═══════════════════════════════════════════════════════
-let lastRenderCodComp = null;
-let lastRenderCodInv  = null;
+// ── REGISTRO ──
+function almRegistrarPorCodigo(cod, desc='', cant=1) {
+    if (!almMap.has(cod)) {
+        if (!desc) { showToast(`⚠️ Código no en inventario: ${cod}`, '#E65100'); beepError(); return; }
+        almMap.set(cod, {desc, stock:0});
+    }
+    const v = almMap.get(cod);
+    if (almModo === 'retiro') {
+        if (v.stock <= 0) { showToast('❌ Sin stock para retirar: ' + cod, '#B71C1C'); beepError(); return; }
+        v.stock -= cant; if (v.stock < 0) v.stock = 0;
+        almMovs.push({cod, tipo:'RETIRO', cant, stockPost:v.stock});
+        showToast(`− RETIRO: ${v.desc||cod} | Stock: ${v.stock}`, '#111');
+    } else {
+        v.stock += cant;
+        almMovs.push({cod, tipo:'INGRESO', cant, stockPost:v.stock});
+        showToast(`+ INGRESO: ${v.desc||cod} | Stock: ${v.stock}`, '#D32F2F');
+    }
+    beepOK(); saveAlm();
+    renderAlm(document.getElementById('alm-filtro-rapido')?.value?.trim().toUpperCase()||'');
+}
 
-function schedRender(modo, cod=null) {
-    if (modo === 'comp') lastRenderCodComp = cod;
-    else lastRenderCodInv = cod;
+function almDeshacer() {
+    if (!almMovs.length) { showToast('⚠️ Nada que deshacer', '#E65100'); toggleMenu(); return; }
+    const mv = almMovs.pop();
+    const v  = almMap.get(mv.cod);
+    if (v) { if (mv.tipo==='RETIRO') v.stock+=mv.cant; else v.stock-=mv.cant; if(v.stock<0) v.stock=0; }
+    saveAlm(); toggleMenu(); beep(660,0.08);
+    showToast(`↩️ Deshecho: ${mv.tipo} de ${mv.cod}`, '#E65100');
+    renderAlm(document.getElementById('alm-filtro-rapido')?.value?.trim().toUpperCase()||'');
+}
 
-    if (renderPending) return;
-    renderPending = true;
-    requestAnimationFrame(() => {
-        renderPending = false;
-        if (modo === 'comp') renderComp(lastRenderCodComp);
-        else renderInv(lastRenderCodInv);
+function almGuardarSnapshot() {
+    if (!almMap.size) { showToast('⚠️ Sin inventario', '#E65100'); toggleMenu(); return; }
+    const n = prompt('Nombre del guardado:', 'ALMACÉN '+new Date().toLocaleString());
+    if (!n) return;
+    almSnapshots.push({nombre:n, fecha:new Date().toLocaleString(), data:Object.fromEntries([...almMap.entries()])});
+    try { localStorage.setItem('p_alm_snaps_v1', JSON.stringify(almSnapshots.slice(-10))); } catch(e) {}
+    toggleMenu(); beep(880,0.1);
+    showToast('✅ Guardado: '+n, '#111');
+}
+
+function almExportar() {
+    if (!almMap.size) { showToast('⚠️ Sin inventario', '#E65100'); toggleMenu(); return; }
+    const ws1Data = [['CODIGO 13 DIGITOS','DESCRIPCION','STOCK ACTUAL']];
+    [...almMap.entries()].sort((a,b)=>b[1].stock-a[1].stock).forEach(([c,v])=>ws1Data.push([c,v.desc||'',v.stock]));
+    const ws2Data = [['#','CODIGO','TIPO','CANTIDAD','STOCK RESULTANTE']];
+    almMovs.forEach((mv,i)=>ws2Data.push([i+1,mv.cod,mv.tipo,mv.cant,mv.stockPost]));
+    const wb = XLSX.utils.book_new();
+    const ws1 = XLSX.utils.aoa_to_sheet(ws1Data); ws1['!cols']=[{wch:18},{wch:55},{wch:14}];
+    const ws2 = XLSX.utils.aoa_to_sheet(ws2Data); ws2['!cols']=[{wch:6},{wch:18},{wch:10},{wch:10},{wch:16}];
+    XLSX.utils.book_append_sheet(wb,ws1,'STOCK ACTUAL');
+    XLSX.utils.book_append_sheet(wb,ws2,'MOVIMIENTOS');
+    XLSX.writeFile(wb,'almacen_pieers_'+new Date().toISOString().slice(0,10)+'.xlsx');
+    toggleMenu(); showToast('✅ Excel exportado','#111');
+}
+
+// ── FILE INPUTS ALMACÉN ──
+document.getElementById('almInput').addEventListener('change', function(e) {
+    const f = e.target.files[0]; if (!f) return;
+    const ext = f.name.split('.').pop().toLowerCase();
+    const reader = new FileReader();
+    showLoading('Cargando inventario...');
+    reader.onload = function(evt) {
+        setTimeout(() => {
+            try {
+                let rows;
+                if (ext==='xlsx'||ext==='xls') { const wb=XLSX.read(new Uint8Array(evt.target.result),{type:'array'}); rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}); }
+                else { const f2=parsearCSV(evt.target.result); const h=f2[0]?f2[0].map(x=>x.trim().toUpperCase()):[]; rows=f2.slice(1).map(r=>{const o={};h.forEach((hh,i)=>o[hh]=r[i]||'');return o;}); }
+                almMap.clear(); let c=0;
+                rows.forEach(row => {
+                    const cod=String(row['CODIGO 13 DIGITOS']||row['CÓDIGO ÚNICO']||row['CODIGO']||row['COD']||Object.values(row)[0]||'').trim().toUpperCase();
+                    const desc=String(row['DESCRIPCION']||row['DESCRIPCIÓN']||row['DESC']||Object.values(row)[1]||'').trim();
+                    const stock=parseInt(row['TOTAL']||row['STOCK']||row['CANTIDAD']||Object.values(row)[2]||0)||0;
+                    if (cod&&cod.length>=4&&cod!=='CODIGO 13 DIGITOS') { almMap.set(cod,{desc,stock}); c++; }
+                });
+                saveAlm(); hideLoading(); toggleMenu(); beep(880,0.1);
+                showToast(`✅ ${c.toLocaleString()} productos cargados`,'#111');
+                renderAlm();
+            } catch(err) { hideLoading(); showToast('❌ '+err.message,'#c62828'); }
+        }, 30);
+    };
+    if (ext==='xlsx'||ext==='xls') reader.readAsArrayBuffer(f); else reader.readAsText(f);
+    e.target.value='';
+});
+
+document.getElementById('almStockInput').addEventListener('change', function(e) {
+    const f = e.target.files[0]; if (!f) return;
+    const ext = f.name.split('.').pop().toLowerCase();
+    const reader = new FileReader();
+    showLoading('Convirtiendo stock...');
+    reader.onload = function(evt) {
+        setTimeout(() => {
+            try {
+                let filas;
+                if (ext==='xlsx'||ext==='xls') { const wb=XLSX.read(new Uint8Array(evt.target.result),{type:'array',dense:true}); filas=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:'',header:1}); }
+                else { filas=parsearCSV(evt.target.result); }
+                const res=convertirStockAResultados(filas);
+                if (!res.length) { hideLoading(); showToast('⚠️ Sin productos','#E65100'); return; }
+                almMap.clear();
+                res.forEach(r => almMap.set(r.codigoUnico.toUpperCase(),{desc:r.descripcion,stock:r.cantidad}));
+                saveAlm(); hideLoading(); toggleMenu(); beep(880,0.1);
+                showToast(`✅ ${res.length.toLocaleString()} productos convertidos`,'#111');
+                renderAlm();
+            } catch(err) { hideLoading(); showToast('❌ '+err.message,'#c62828'); }
+        }, 30);
+    };
+    if (ext==='xlsx'||ext==='xls') reader.readAsArrayBuffer(f); else reader.readAsText(f);
+    e.target.value='';
+});
+
+// ══════════════════════════════════════════════════════
+//  MODAL BÚSQUEDA
+// ══════════════════════════════════════════════════════
+function abrirModalBusqueda() {
+    document.getElementById('modal-busqueda').style.display = 'flex';
+    document.getElementById('busq-input').value = '';
+    document.getElementById('busq-count').textContent = '0';
+    document.getElementById('busq-resultados').innerHTML = '<div class="busq-empty">Escribe para buscar un producto</div>';
+    setTimeout(() => document.getElementById('busq-input').focus(), 80);
+}
+function cerrarModalBusqueda() { document.getElementById('modal-busqueda').style.display = 'none'; }
+
+function onBusqTipoChange() {
+    const tipo = document.getElementById('busq-tipo').value;
+    const inp  = document.getElementById('busq-input');
+    const hints = { codigo13:'Código 13 dígitos...', codigo7:'Artículo 7 dígitos...', nombre:'Nombre del producto...' };
+    inp.placeholder = hints[tipo]; inp.value = '';
+    document.getElementById('busq-resultados').innerHTML = '<div class="busq-empty">Escribe para buscar un producto</div>';
+    document.getElementById('busq-count').textContent = '0';
+    inp.focus();
+}
+
+function ejecutarBusqueda() {
+    const tipo = document.getElementById('busq-tipo').value;
+    const q    = document.getElementById('busq-input').value.trim().toUpperCase();
+    const cont = document.getElementById('busq-resultados');
+    const countEl = document.getElementById('busq-count');
+    if (!q) { cont.innerHTML='<div class="busq-empty">Escribe para buscar un producto</div>'; countEl.textContent='0'; return; }
+
+    let res = [];
+    for (const [cod,v] of almMap) {
+        let match = false;
+        if (tipo==='codigo13')  match = cod.includes(q);
+        else if (tipo==='codigo7') match = /^\d{1,7}$/.test(q) && cod.includes(q);
+        else match = (v.desc||'').toUpperCase().includes(q);
+        if (match) res.push([cod,v]);
+    }
+    res.sort((a,b)=>b[1].stock-a[1].stock);
+    countEl.textContent = res.length;
+
+    if (!res.length) { cont.innerHTML=`<div class="busq-empty">Sin resultados para "${q}"</div>`; return; }
+    cont.innerHTML = '';
+    res.slice(0,30).forEach(([cod,v]) => {
+        const stockColor = v.stock===0 ? '#B71C1C' : v.stock<=2 ? '#E65100' : '#1B5E20';
+        const item = document.createElement('div');
+        item.className = 'busq-item';
+        item.innerHTML = `<div class="busq-item-desc">${v.desc||'(sin descripción)'}<span class="busq-item-cod">${cod}</span></div><span class="busq-item-stock" style="color:${stockColor};">${v.stock}</span>`;
+        item.addEventListener('click', () => { cerrarModalBusqueda(); abrirModalMovimiento(cod); });
+        cont.appendChild(item);
     });
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAL RETIRO / INGRESO
+// ══════════════════════════════════════════════════════
+function abrirModalMovimiento(codPresel=null) {
+    const esRetiro  = almModo === 'retiro';
+    const header    = document.getElementById('mov-header-bar');
+    const title     = document.getElementById('mov-modal-title');
+    const btnAp     = document.getElementById('mov-btn-aplicar');
+    header.className = 'mov-header ' + (esRetiro ? 'retiro' : 'ingreso');
+    title.textContent = esRetiro ? '− RETIRAR STOCK' : '+ INGRESAR STOCK';
+    btnAp.className   = 'mov-btn-aplicar ' + (esRetiro ? 'retiro' : 'ingreso');
+    btnAp.textContent = esRetiro ? 'APLICAR RETIRO' : 'APLICAR INGRESO';
+
+    if (codPresel) {
+        document.getElementById('mov-manual-cod').value  = codPresel;
+        document.getElementById('mov-manual-desc').value = almMap.get(codPresel)?.desc || '';
+        document.getElementById('mov-manual-cant').value = '1';
+        movSetInputMode('manual');
+    } else {
+        document.getElementById('mov-manual-cod').value  = '';
+        document.getElementById('mov-manual-desc').value = '';
+        document.getElementById('mov-manual-cant').value = '1';
+        movSetInputMode('lectora');
+    }
+
+    document.getElementById('modal-movimiento').style.display = 'flex';
+    if (movInputMode === 'lectora') { document.getElementById('mov-scanner').value = ''; setTimeout(()=>document.getElementById('mov-scanner').focus(), 80); }
+    else setTimeout(()=>document.getElementById('mov-manual-cant').focus(), 80);
+}
+
+function cerrarModalMovimiento() {
+    document.getElementById('modal-movimiento').style.display = 'none';
+    document.getElementById('mov-scanner').value = '';
+    document.getElementById('mov-manual-cod').value = '';
+    document.getElementById('mov-manual-desc').value = '';
+    document.getElementById('mov-manual-cant').value = '1';
+}
+
+function movSetInputMode(mode) {
+    movInputMode = mode;
+    document.getElementById('mov-tab-lectora').classList.toggle('activo', mode==='lectora');
+    document.getElementById('mov-tab-manual').classList.toggle('activo',  mode==='manual');
+    document.getElementById('mov-modo-lectora').style.display = mode==='lectora' ? '' : 'none';
+    document.getElementById('mov-modo-manual').style.display  = mode==='manual'  ? '' : 'none';
+    if (mode==='lectora') { document.getElementById('mov-scanner').value=''; setTimeout(()=>document.getElementById('mov-scanner').focus(),60); }
+}
+
+// Scanner del modal de movimiento
+const movScanEl = document.getElementById('mov-scanner');
+let movBufBT='', movFlushTimer=null;
+movScanEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        clearTimeout(movFlushTimer);
+        const cod = (movBufBT.trim()||movScanEl.value.trim()).toUpperCase();
+        movBufBT=''; movScanEl.value='';
+        if (cod.length >= 4) { almRegistrarPorCodigo(cod,'',1); cerrarModalMovimiento(); }
+    } else if (e.key.length===1) {
+        movBufBT += e.key;
+        clearTimeout(movFlushTimer);
+        movFlushTimer = setTimeout(() => {
+            const cod = movBufBT.trim().toUpperCase(); movBufBT=''; movScanEl.value='';
+            if (cod.length >= 4) { almRegistrarPorCodigo(cod,'',1); cerrarModalMovimiento(); }
+        }, 180);
+    }
+});
+
+function aplicarMovimientoManual() {
+    const cod  = document.getElementById('mov-manual-cod').value.trim().toUpperCase();
+    const desc = document.getElementById('mov-manual-desc').value.trim();
+    const cant = parseInt(document.getElementById('mov-manual-cant').value)||1;
+    if (!cod) { showToast('⚠️ Ingresa el código del producto', '#E65100'); return; }
+    almRegistrarPorCodigo(cod, desc, cant);
+    cerrarModalMovimiento();
+}
+
+// ── CSV PARSER ──
+function parsearCSV(texto) {
+    const filas = [];
+    for (const linea of texto.split('\n')) {
+        if (!linea.trim()) continue;
+        const campos=[]; let campo='', dQ=false;
+        for (let i=0;i<linea.length;i++) {
+            const c=linea[i];
+            if (c==='"') { if(dQ&&linea[i+1]==='"'){campo+='"';i++;}else{dQ=!dQ;} }
+            else if (c===','&&!dQ) { campos.push(campo.trim()); campo=''; }
+            else { campo+=c; }
+        }
+        campos.push(campo.trim()); filas.push(campos);
+    }
+    return filas;
+}
+
+// ── CONVERTIR STOCK PIEERS ──
+function convertirStockAResultados(filas) {
+    const res=[];
+    for (let i=0;i<filas.length;i++) {
+        const fila=filas[i];
+        if (!fila||fila.length<51) continue;
+        const modelo=String(fila[22]||'').trim(), lineaDesc=String(fila[23]||'').trim();
+        const colorCod=String(fila[37]||'').trim(), colorNom=String(fila[38]||'').trim();
+        if (!modelo||modelo==='MODELO'||!colorCod||colorCod==='ESTADO:'||/^(Total|TOTAL|Unnamed|DETALLE|STOCK|Fech|Usuario|Página)/.test(modelo)) continue;
+        const tallas=[]; for(let t=24;t<=35;t++) tallas.push(String(fila[t]||'').trim());
+        const cants=[]; for(let c=39;c<=50;c++) cants.push(parseInt(fila[c])||0);
+        let ti=1;
+        for (let t=0;t<tallas.length;t++) {
+            if (!tallas[t]||tallas[t]==='--') continue;
+            if (cants[t]<=0) { ti++; continue; }
+            res.push({codigoUnico:'P'+modelo+colorCod+String(ti).padStart(2,'0'), descripcion:'PIEERS '+lineaDesc+' '+colorNom+' T/'+tallas[t], cantidad:cants[t]});
+            ti++;
+        }
+    }
+    return res;
+}
+
+function convertirStockDesdeFilas(filas) {
+    const res=convertirStockAResultados(filas);
+    if (!res.length) { hideLoading(); showToast('⚠️ Sin productos válidos','#E65100'); return; }
+    const wsData=[['CODIGO 13 DIGITOS','DESCRIPCION','TOTAL']];
+    res.forEach(r=>wsData.push([r.codigoUnico,r.descripcion,r.cantidad]));
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.aoa_to_sheet(wsData); ws['!cols']=[{wch:18},{wch:55},{wch:8}];
+    XLSX.utils.book_append_sheet(wb,ws,'INVENTARIO PIEERS');
+    XLSX.writeFile(wb,'inventario_pieers_'+new Date().toISOString().slice(0,10)+'.xlsx');
+    hideLoading(); toggleMenu(); beep(880,0.1);
+    showToast(`✅ ${res.length.toLocaleString()} líneas → descargado`,'#111');
+}
+
+function procesarFilasMaestro(rows,offset,isTxt=false) {
+    const end=Math.min(offset+CHUNK_SIZE,rows.length);
+    for (let i=offset;i<end;i++) {
+        const row=rows[i]; let cod,stock,desc='';
+        if (isTxt) { cod=row._cod; stock=row._stock; }
+        else {
+            const vals=Object.values(row);
+            cod=String(row['CODIGO 13 DIGITOS']||row['Código Único']||row['CODIGO UNICO']||row.codigo||row.CODIGO||vals[0]||'').trim();
+            desc=String(row['DESCRIPCION']||row['DESCRIPCIÓN']||row.descripcion||row.DESCRIPCION||row.desc||row.DESC||vals[1]||'').trim();
+            if (!isNaN(desc)&&desc!=='') { stock=parseInt(desc)||0; desc=''; }
+            else stock=parseInt(row.TOTAL||row.stock||row.STOCK||row.cantidad||row.CANTIDAD||vals[2])||0;
+        }
+        if (cod&&cod.length>=4&&cod!=='undefined') { maestroMap.set(cod,{exp:stock,real:0}); if(desc) descripcionMap.set(cod,desc); totalEsp+=stock; }
+    }
+    if (end<rows.length) {
+        showLoading(`Cargando maestro... ${Math.round((end/rows.length)*100)}%`);
+        setTimeout(()=>procesarFilasMaestro(rows,end,isTxt),0);
+    } else {
+        if (historial.length>0) syncConteo();
+        localStorage.setItem('p_total_v8',totalEsp);
+        saveComp(); hideLoading(); toggleMenu(); beep(880,0.1);
+        showToast(`✅ Maestro: ${maestroMap.size.toLocaleString()} códigos`,'#111');
+        renderComp(); focusScanner();
+    }
+}
+
+// ── RENDER COMPARATIVO ──
+let lastRenderCodComp=null;
+function schedRender(m,cod=null) {
+    if (m==='comp') lastRenderCodComp=cod;
+    if (renderPending) return; renderPending=true;
+    requestAnimationFrame(()=>{ renderPending=false; if(m==='comp') renderComp(lastRenderCodComp); });
 }
 
 function renderComp(ultimoCod=null) {
-    const cont = historial.length;
+    const cont=historial.length;
     document.getElementById('stat-esp').textContent  = totalEsp.toLocaleString();
     document.getElementById('stat-cont').textContent = cont.toLocaleString();
-    const p = totalEsp > 0 ? Math.min(Math.round((cont/totalEsp)*100), 100) : 0;
-    document.getElementById('stat-avan').textContent = p + '%';
-    document.getElementById('bar-fill').style.width  = p + '%';
+    const p=totalEsp>0?Math.min(Math.round((cont/totalEsp)*100),100):0;
+    document.getElementById('stat-avan').textContent = p+'%';
+    document.getElementById('bar-fill').style.width  = p+'%';
 
-    // — Flujo de lectura: últimas 30 —
-    const frag1 = document.createDocumentFragment();
-    const ultimas = historial.slice(-30).reverse();
-    ultimas.forEach((c, i) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${historial.length - i}</td><td>${c}</td>`;
-        frag1.appendChild(tr);
-    });
-    const tL = document.getElementById('t-lectura');
-    tL.innerHTML = '';
-    tL.appendChild(frag1);
+    const frag1=document.createDocumentFragment();
+    historial.slice(-30).reverse().forEach((c,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${historial.length-i}</td><td>${c}</td>`; frag1.appendChild(tr); });
+    const tL=document.getElementById('t-lectura'); tL.innerHTML=''; tL.appendChild(frag1);
 
-    // — Maestro: mostrar cod actual primero, luego activos, luego hasta MAX_FILAS_DOM —
-    const frag2 = document.createDocumentFragment();
-    let count = 0;
-
-    // 1) El código recién leído va primero (resaltado)
-    if (ultimoCod && maestroMap.has(ultimoCod)) {
-        frag2.appendChild(crearFilaComp(ultimoCod, maestroMap.get(ultimoCod), true));
-        count++;
-    }
-
-    // 2) Primero los que tienen discrepancia (real > 0 y ≠ exp)
-    for (const [k, v] of maestroMap) {
-        if (k === ultimoCod) continue;
-        if (count >= MAX_FILAS_DOM) break;
-        if (v.real > 0 && v.real !== v.exp) {
-            frag2.appendChild(crearFilaComp(k, v));
-            count++;
-        }
-    }
-
-    // 3) Luego los OK (leídos correctamente)
-    for (const [k, v] of maestroMap) {
-        if (k === ultimoCod) continue;
-        if (count >= MAX_FILAS_DOM) break;
-        if (v.real > 0 && v.real === v.exp) {
-            frag2.appendChild(crearFilaComp(k, v));
-            count++;
-        }
-    }
-
-    // 4) Rellena con los primeros del maestro (para ver la lista)
-    for (const [k, v] of maestroMap) {
-        if (k === ultimoCod) continue;
-        if (count >= MAX_FILAS_DOM) break;
-        if (v.real === 0) {
-            frag2.appendChild(crearFilaComp(k, v));
-            count++;
-        }
-    }
-
-    const tM = document.getElementById('t-maestro');
-    tM.innerHTML = '';
-    tM.appendChild(frag2);
+    const frag2=document.createDocumentFragment(); let count=0;
+    if (ultimoCod&&maestroMap.has(ultimoCod)) { frag2.appendChild(crearFilaComp(ultimoCod,maestroMap.get(ultimoCod),true)); count++; }
+    for (const [k,v] of maestroMap) { if(k===ultimoCod||count>=MAX_FILAS_DOM) continue; if(v.real>0&&v.real!==v.exp){frag2.appendChild(crearFilaComp(k,v));count++;} }
+    for (const [k,v] of maestroMap) { if(k===ultimoCod||count>=MAX_FILAS_DOM) continue; if(v.real>0&&v.real===v.exp){frag2.appendChild(crearFilaComp(k,v));count++;} }
+    for (const [k,v] of maestroMap) { if(k===ultimoCod||count>=MAX_FILAS_DOM) continue; if(v.real===0){frag2.appendChild(crearFilaComp(k,v));count++;} }
+    const tM=document.getElementById('t-maestro'); tM.innerHTML=''; tM.appendChild(frag2);
 }
 
-function crearFilaComp(k, v, resaltar=false) {
-    const tr = document.createElement('tr');
-    const cls = (v.real === v.exp && v.exp > 0) ? 'match' : (v.real > v.exp ? 'sobrante' : 'falta');
-    tr.className = cls + (resaltar ? ' resaltar' : '');
-    tr.style.cursor = 'pointer';
-    tr.innerHTML = `<td>${k}</td><td>${v.exp}</td><td>${v.real}</td>`;
-    tr.addEventListener('click', () => mostrarDesc(k));
+function crearFilaComp(k,v,resaltar=false) {
+    const tr=document.createElement('tr');
+    const diff=v.real-v.exp;
+    const cls=diff<0?'falta':diff>0?'sobrante':v.real>0?'match':'';
+    if (cls) tr.className=cls;
+    if (resaltar) tr.style.outline='3px solid var(--rojo)';
+    tr.innerHTML=`<td style="font-size:10px;font-weight:bold;word-break:break-all;">${k}</td><td>${v.exp}</td><td style="font-weight:bold;">${v.real}</td>`;
+    tr.addEventListener('click', ()=>mostrarDesc(k));
     return tr;
 }
 
 function mostrarDesc(cod) {
-    const desc = descripcionMap.get(cod) || '';
-    const panel = document.getElementById('panel-desc');
-    if (!desc) { panel.style.display = 'none'; return; }
-    document.getElementById('desc-cod').textContent = cod + ' — ';
-    document.getElementById('desc-txt').textContent = desc;
-    panel.style.display = 'block';
+    const desc=descripcionMap.get(cod)||'';
+    const panel=document.getElementById('panel-desc');
+    if (!desc) { panel.style.display='none'; return; }
+    document.getElementById('desc-cod').textContent=cod+' — ';
+    document.getElementById('desc-txt').textContent=desc;
+    panel.style.display='block';
 }
 
-function renderInv(ultimoCod=null) {
-    const cont   = invHistorial.length;
-    const unicos = invConteo.size;
-    document.getElementById('stat-cont').textContent = cont.toLocaleString();
-    document.getElementById('stat-unic').textContent = unicos.toLocaleString();
-    document.getElementById('bar-fill').style.width  = '100%';
-
-    // — Flujo de lectura —
-    const frag1 = document.createDocumentFragment();
-    invHistorial.slice(-30).reverse().forEach((c,i) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${invHistorial.length-i}</td><td>${c}</td>`;
-        frag1.appendChild(tr);
-    });
-    const tL = document.getElementById('t-lect-inv');
-    tL.innerHTML = ''; tL.appendChild(frag1);
-
-    // — Conteo: cod actual primero, luego ordenado por cantidad desc —
-    const frag2 = document.createDocumentFragment();
-    let count = 0;
-
-    if (ultimoCod && invConteo.has(ultimoCod)) {
-        const tr = document.createElement('tr');
-        tr.className = 'match';
-        tr.innerHTML = `<td>${ultimoCod}</td><td>${invConteo.get(ultimoCod)}</td>`;
-        frag2.appendChild(tr);
-        count++;
-    }
-
-    // Ordenar por cantidad desc (solo los primeros MAX_FILAS_DOM)
-    const sorted = [...invConteo.entries()].sort((a,b) => b[1]-a[1]);
-    for (const [k,v] of sorted) {
-        if (k === ultimoCod) continue;
-        if (count >= MAX_FILAS_DOM) break;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${k}</td><td>${v}</td>`;
-        frag2.appendChild(tr);
-        count++;
-    }
-
-    const tI = document.getElementById('t-inv');
-    tI.innerHTML = ''; tI.appendChild(frag2);
-}
-
-// ═══════════════════════════════════════════════════════
-//  GUARDAR LOTE
-// ═══════════════════════════════════════════════════════
+// ── GUARDAR LOTE ──
 function guardarLote() {
-    if (modoActual === 'inv') return guardarLoteInv();
-
-    if (historial.length === 0) { showToast('Nada que guardar', '#e74c3c'); toggleMenu(); return; }
-    const n = prompt('Nombre del reporte:', 'AUDITORIA ' + (lotes.length+1));
+    if (!historial.length) { showToast('Nada que guardar','#c62828'); toggleMenu(); return; }
+    const def='COMPARATIVO_'+new Date().toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'2-digit'}).replace(/\//g,'-')+'_'+(lotes.length+1);
+    const n=prompt('Nombre del reporte:', def);
     if (!n) return;
-
-    // Guardar snapshot de maestro en el momento del cierre
-    lotes.push({
-        nombre: n,
-        fecha: new Date().toLocaleString(),
-        tipo: 'comp',
-        datosLectura: [...historial],
-        maestroSnapshot: Object.fromEntries(maestroMap)
-    });
-    historial = [];
-    maestroMap.forEach(v => v.real = 0);
-    saveComp(); saveLotes();
-    renderComp(); toggleMenu();
-    showToast('✅ Reporte guardado', '#1e8449');
+    lotes.push({nombre:n, fecha:new Date().toLocaleString(), tipo:'comp', datosLectura:[...historial], maestroSnapshot:Object.fromEntries(maestroMap), descSnapshot:Object.fromEntries(descripcionMap)});
+    historial=[]; maestroMap.forEach(v=>v.real=0);
+    saveComp(); saveLotes(); renderComp(); toggleMenu();
+    showToast('✅ Guardado: '+n,'#111');
 }
 
-function guardarLoteInv() {
-    if (invHistorial.length === 0) { showToast('Nada que guardar', '#e74c3c'); toggleMenu(); return; }
-    const n = prompt('Nombre del inventario:', 'INVENTARIO ' + (invLotes.length+1));
-    if (!n) return;
-
-    invLotes.push({
-        nombre: n,
-        fecha: new Date().toLocaleString(),
-        tipo: 'inv',
-        datosLectura: [...invHistorial]
-    });
-    invHistorial = []; invConteo = new Map();
-    saveInv(); saveLotes();
-    renderInv(); toggleMenu();
-    showToast('✅ Inventario guardado', '#1e8449');
-}
-
-// ═══════════════════════════════════════════════════════
-//  EXPORTAR EXCEL — COMPARATIVO
-// ═══════════════════════════════════════════════════════
-function exportarExcel(idx) {
-    const lote = lotes[idx];
-    const conteoAgr = {};
-    lote.datosLectura.forEach(c => { conteoAgr[c] = (conteoAgr[c]||0)+1; });
-
-    const concilia = [];
-
-    Object.entries(lote.maestroSnapshot).forEach(([cod,v]) => {
-        const leido = conteoAgr[cod] || 0;
-        const diff  = leido - v.exp;
-        const est   = diff < 0 ? 'FALTA' : diff > 0 ? 'SOBRA' : 'OK';
-        concilia.push({
-            'A - COD_MAESTRO':    cod,
-            'B - COD_LECTURA':    leido > 0 ? cod : '',
-            'C - STOCK_ESPERADO': v.exp,
-            'D - CONTEO_REAL':    leido,
-            'E - ESTADO':         est,
-            'F - DIFERENCIA':     Math.abs(diff)
-        });
-    });
-
-    // Sobrantes puros (no estaban en maestro)
-    Object.entries(conteoAgr).forEach(([cod,cant]) => {
-        if (!lote.maestroSnapshot.hasOwnProperty(cod)) {
-            concilia.push({ 'A - COD_MAESTRO':'', 'B - COD_LECTURA':cod, 'C - STOCK_ESPERADO':0, 'D - CONTEO_REAL':cant, 'E - ESTADO':'SOBRA', 'F - DIFERENCIA':cant });
+// ── RESETEAR ──
+function resetearModulo() {
+    const mod={comp:'COMPARATIVO',alm:'ALMACÉN'}[modoActual]||'módulo';
+    mostrarConfirm(`Resetear ${mod}`,`¿Borrar todos los datos de ${mod}?`, () => {
+        if (modoActual==='comp') {
+            ['p_maestro_v8','p_hist_v8','p_total_v8','p_desc_v8'].forEach(k=>localStorage.removeItem(k));
+            maestroMap=new Map(); descripcionMap=new Map(); historial=[]; totalEsp=0; renderComp();
+        } else {
+            ['p_alm_v1','p_alm_movs_v1','p_alm_snaps_v1'].forEach(k=>localStorage.removeItem(k));
+            almMap=new Map(); almMovs=[]; almSnapshots=[]; renderAlm();
         }
+        toggleMenu(); showToast(`✅ ${mod} reseteado`,'#E65100');
     });
-
-    const agrupado = Object.entries(conteoAgr).map(([cod,cant]) => ({ CODIGO:cod, CANTIDAD_TOTAL:cant }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(concilia),  'CONCILIACION');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(agrupado),  'LECTURAS_CONSOLIDADAS');
-    XLSX.writeFile(wb, `${lote.nombre}_CONCILIADO.xlsx`);
 }
 
-// ═══════════════════════════════════════════════════════
-//  EXPORTAR EXCEL — INVENTARIO
-// ═══════════════════════════════════════════════════════
-function exportarExcelInv(idx) {
-    const lote = invLotes[idx];
-    const conteo = {};
-    lote.datosLectura.forEach(c => { conteo[c] = (conteo[c]||0)+1; });
-
-    const filas = Object.entries(conteo)
-        .sort((a,b) => b[1]-a[1])
-        .map(([cod,cant]) => ({ CODIGO:cod, CANTIDAD:cant }));
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), 'INVENTARIO');
-    XLSX.writeFile(wb, `${lote.nombre}_INVENTARIO.xlsx`);
+function resetearApp() {
+    mostrarConfirm('⚠️ Resetear TODO','Se eliminarán TODOS los datos. No se puede deshacer.', () => {
+        Object.keys(localStorage).filter(k=>['p_maestro','p_hist','p_total','p_lotes','p_alm','p_desc'].some(x=>k.startsWith(x))).forEach(k=>localStorage.removeItem(k));
+        maestroMap=new Map(); descripcionMap=new Map(); historial=[]; lotes=[]; totalEsp=0;
+        almMap=new Map(); almMovs=[]; almSnapshots=[];
+        toggleMenu(); showToast('✅ Todo reseteado','#111');
+        setTimeout(()=>location.reload(),800);
+    });
 }
 
-// ═══════════════════════════════════════════════════════
-//  EXPORTAR TXT
-// ═══════════════════════════════════════════════════════
-function exportarTxt(idx) {
-    const lote = lotes[idx];
-    const c = {};
-    lote.datosLectura.forEach(cod => { c[cod]=(c[cod]||0)+1; });
-    const txt = Object.entries(c).map(([k,v])=>`${k}|${v}`).join('\n');
-    descargar(txt, `${lote.nombre}_CONSOLIDADO.txt`);
-}
-function exportarTxtInv(idx) {
-    const lote = invLotes[idx];
-    const c = {};
-    lote.datosLectura.forEach(cod => { c[cod]=(c[cod]||0)+1; });
-    const txt = Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}|${v}`).join('\n');
-    descargar(txt, `${lote.nombre}_INVENTARIO.txt`);
-}
-function descargar(texto, nombre) {
-    const b = new Blob([texto],{type:'text/plain'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(b); a.download = nombre; a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+// ── EXPORTAR EXCEL COMPARATIVO ──
+function exportarExcel(idx) {
+    const lote=lotes[idx];
+    const cA={};
+    lote.datosLectura.forEach(c=>{cA[c]=(cA[c]||0)+1;});
+    const concilia=[];
+    Object.entries(lote.maestroSnapshot).forEach(([cod,v])=>{
+        const leido=cA[cod]||0, diff=leido-v.exp, est=diff<0?'FALTA':diff>0?'SOBRA':'OK';
+        const desc=(lote.descSnapshot&&lote.descSnapshot[cod])||descripcionMap.get(cod)||'';
+        concilia.push({'A - CODIGO':cod,'B - DESCRIPCION':desc,'C - STOCK_ESPERADO':v.exp,'D - CONTEO_REAL':leido,'E - ESTADO':est,'F - DIFERENCIA':Math.abs(diff)});
+    });
+    Object.entries(cA).forEach(([cod,cant])=>{ if(!lote.maestroSnapshot.hasOwnProperty(cod)) concilia.push({'A - CODIGO':cod,'B - DESCRIPCION':descripcionMap.get(cod)||'','C - STOCK_ESPERADO':0,'D - CONTEO_REAL':cant,'E - ESTADO':'SOBRA','F - DIFERENCIA':cant}); });
+    const agrupad=Object.entries(cA).map(([cod,cant])=>({CODIGO:cod,DESCRIPCION:(lote.descSnapshot&&lote.descSnapshot[cod])||descripcionMap.get(cod)||'',CANTIDAD_TOTAL:cant}));
+    const wb=XLSX.utils.book_new();
+    const ws1=XLSX.utils.json_to_sheet(concilia); ws1['!cols']=[{wch:18},{wch:55},{wch:14},{wch:12},{wch:10},{wch:12}];
+    const ws2=XLSX.utils.json_to_sheet(agrupad);   ws2['!cols']=[{wch:18},{wch:55},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,ws1,'CONCILIACION');
+    XLSX.utils.book_append_sheet(wb,ws2,'LECTURAS_CONSOLIDADAS');
+    XLSX.writeFile(wb,`${lote.nombre}_CONCILIADO.xlsx`);
 }
 
-// ═══════════════════════════════════════════════════════
-//  REANUDAR LOTE
-// ═══════════════════════════════════════════════════════
+// ── MODAL LOTES ──
+function renderLotes() {
+    const d=document.getElementById('listaLotes'); d.innerHTML='';
+    document.getElementById('modal-lotes-title').textContent='REPORTES COMPARATIVO';
+    const btnS=(bg,c)=>`background:${bg};color:${c};border:none;padding:8px 10px;border-radius:6px;font-size:11px;margin:3px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;`;
+    if (!lotes.length) { d.innerHTML='<p style="color:#666;text-align:center;margin-top:50px;font-family:Barlow,sans-serif;">Sin reportes guardados</p>'; return; }
+    lotes.forEach((l,i)=>{
+        const div=document.createElement('div'); div.className='card-lote';
+        div.innerHTML=`<strong style="color:var(--rojo);font-family:'Barlow Condensed',sans-serif;font-size:14px;">${l.nombre}</strong><br><small style="color:#666;">${l.fecha} | ${l.datosLectura.length.toLocaleString()} unid.</small><br><br>
+        <button onclick="reanudarLote(${i})" style="${btnS('#1A1A1A','white')}">▶ REANUDAR</button>
+        <button onclick="exportarExcel(${i})" style="${btnS('#D32F2F','white')}">📊 EXCEL</button>
+        <button onclick="exportarTxt(${i})"   style="${btnS('#444','#ccc')}">📄 TXT</button>
+        <button onclick="eliminarLote(${i})"  style="${btnS('#B71C1C','white')}">🗑️</button>`;
+        d.appendChild(div);
+    });
+}
+
 function reanudarLote(idx) {
     showLoading('Reanudando...');
-    const lote = lotes[idx];
-    setTimeout(() => {
-        lote.datosLectura.forEach(c => {
-            historial.push(c);
-            if (maestroMap.has(c)) maestroMap.get(c).real++;
-            else maestroMap.set(c, {exp:0,real:1});
-        });
-        lotes.splice(idx,1);
-        saveLotes(); saveComp();
-        hideLoading(); cerrarModal('modalLotes'); renderComp();
+    const lote=lotes[idx];
+    setTimeout(()=>{
+        lote.datosLectura.forEach(c=>{ historial.push(c); if(maestroMap.has(c)) maestroMap.get(c).real++; else maestroMap.set(c,{exp:0,real:1}); });
+        lotes.splice(idx,1); saveLotes(); saveComp(); hideLoading(); cerrarModal('modalLotes'); renderComp();
     }, 30);
 }
 
-function reanudarLoteInv(idx) {
-    const lote = invLotes[idx];
-    lote.datosLectura.forEach(c => {
-        invHistorial.push(c);
-        invConteo.set(c, (invConteo.get(c)||0)+1);
-    });
-    invLotes.splice(idx,1);
-    saveLotes(); saveInv(); cerrarModal('modalLotes'); renderInv();
+function exportarTxt(idx) {
+    const lote=lotes[idx], c={};
+    lote.datosLectura.forEach(cod=>{c[cod]=(c[cod]||0)+1;});
+    const txt=Object.entries(c).map(([k,v])=>`${k}|${(lote.descSnapshot&&lote.descSnapshot[k])||descripcionMap.get(k)||''}|${v}`).join('\n');
+    descargar(txt,`${lote.nombre}_CONSOLIDADO.txt`);
 }
 
-// ═══════════════════════════════════════════════════════
-//  MODAL LOTES
-// ═══════════════════════════════════════════════════════
-function renderLotes() {
-    const d = document.getElementById('listaLotes');
-    d.innerHTML = '';
-
-    if (modoActual === 'comp') {
-        if (!lotes.length) { d.innerHTML='<p style="color:#888;text-align:center;margin-top:50px;">Sin reportes guardados</p>'; return; }
-        lotes.forEach((l,i) => {
-            const div = document.createElement('div');
-            div.className = 'card-lote';
-            div.innerHTML = `<strong style="color:var(--cm)">${l.nombre}</strong><br>
-                <small>${l.fecha} | ${l.datosLectura.length.toLocaleString()} unid.</small><br><br>
-                <button onclick="reanudarLote(${i})"  style="background:#3498db;color:white;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">REANUDAR</button>
-                <button onclick="exportarExcel(${i})" style="background:#2ecc71;color:black;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">EXCEL</button>
-                <button onclick="exportarTxt(${i})"   style="background:#2ecc71;color:black;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">TXT</button>
-                <button onclick="eliminarLote(${i})"  style="background:#e74c3c;color:white;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">BORRAR</button>`;
-            d.appendChild(div);
-        });
-    } else {
-        if (!invLotes.length) { d.innerHTML='<p style="color:#888;text-align:center;margin-top:50px;">Sin inventarios guardados</p>'; return; }
-        invLotes.forEach((l,i) => {
-            const uniq = new Set(l.datosLectura).size;
-            const div  = document.createElement('div');
-            div.className = 'card-lote';
-            div.style.borderLeftColor = '#1e8449';
-            div.innerHTML = `<strong style="color:#2ecc71">${l.nombre}</strong><br>
-                <small>${l.fecha} | ${l.datosLectura.length.toLocaleString()} unid. | ${uniq} únicos</small><br><br>
-                <button onclick="reanudarLoteInv(${i})"  style="background:#1e8449;color:white;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">REANUDAR</button>
-                <button onclick="exportarExcelInv(${i})" style="background:#2ecc71;color:black;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">EXCEL</button>
-                <button onclick="exportarTxtInv(${i})"   style="background:#2ecc71;color:black;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">TXT</button>
-                <button onclick="eliminarLoteInv(${i})"  style="background:#e74c3c;color:white;border:none;padding:8px;border-radius:5px;font-size:10px;margin:2px;">BORRAR</button>`;
-            d.appendChild(div);
-        });
-    }
+function descargar(texto,nombre) {
+    const b=new Blob([texto],{type:'text/plain'}), a=document.createElement('a');
+    a.href=URL.createObjectURL(b); a.download=nombre; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
 }
 
-function eliminarLote(i)    { if(confirm('¿Eliminar reporte?'))    { lotes.splice(i,1);    saveLotes(); renderLotes(); } }
-function eliminarLoteInv(i) { if(confirm('¿Eliminar inventario?')) { invLotes.splice(i,1); saveLotes(); renderLotes(); } }
+function eliminarLote(i) { if(confirm('¿Eliminar reporte?')) { lotes.splice(i,1); saveLotes(); renderLotes(); } }
 
-// ═══════════════════════════════════════════════════════
-//  UTILIDADES
-// ═══════════════════════════════════════════════════════
-function toggleMenu() {
-    const m = document.getElementById('menuContent');
-    m.style.display = m.style.display === 'block' ? 'none' : 'block';
-}
+// ── UTILIDADES ──
+function toggleMenu() { const m=document.getElementById('menuContent'); m.style.display=m.style.display==='block'?'none':'block'; }
 function abrirModal(id) {
-    document.getElementById(id).style.display = 'flex';
-    if (id === 'modalLotes') renderLotes();
-    toggleMenu();
+    document.getElementById(id).style.display='flex';
+    if (id==='modalLotes') renderLotes();
+    const menu=document.getElementById('menuContent');
+    if (menu.style.display==='block') menu.style.display='none';
 }
-function cerrarModal(id) {
-    document.getElementById(id).style.display = 'none';
-    focusScanner();
-}
-function desbloquear() {
-    bloqueado = false;
-    document.getElementById('overlay-error').style.display = 'none';
-    focusScanner();
-}
-function resetearApp() {
-    if (confirm('¿BORRAR TODO? Se eliminarán todos los datos de comparativo e inventario.')) {
-        // Borrar todas las claves de esta app (v8 y versiones anteriores)
-        const claves = Object.keys(localStorage).filter(k =>
-            k.startsWith('p_maestro') || k.startsWith('p_hist') ||
-            k.startsWith('p_total')   || k.startsWith('p_lotes') ||
-            k.startsWith('p_inv')
-        );
-        claves.forEach(k => localStorage.removeItem(k));
+function cerrarModal(id) { document.getElementById(id).style.display='none'; focusScanner(); }
+function desbloquear() { bloqueado=false; document.getElementById('overlay-error').style.display='none'; focusScanner(); }
+function focusScanner() { setTimeout(()=>{ try{document.getElementById('scanner').focus();}catch(e){} },80); }
 
-        // Resetear estado en memoria también
-        maestroMap     = new Map();
-        descripcionMap = new Map();
-        historial      = [];
-        lotes          = [];
-        totalEsp       = 0;
-        invHistorial   = [];
-        invLotes       = [];
-        invConteo      = new Map();
-        toggleMenu();
-        showToast('✅ Todo reseteado correctamente', '#1e8449');
-
-        setTimeout(() => location.reload(), 800);
-    }
-}
-function focusScanner() {
-    setTimeout(() => { try { document.getElementById('scanner').focus(); } catch(e){} }, 80);
-}
-
-// Mantener foco en scanner al tocar fuera de elementos interactivos
 document.addEventListener('click', (e) => {
-    const tag = e.target.tagName;
-    if (!bloqueado && modoActual && tag !== 'BUTTON' && tag !== 'INPUT' && tag !== 'SELECT') {
-        focusScanner();
-    }
+    const tag=e.target.tagName;
+    if (!bloqueado&&modoActual&&modoActual!=='alm'&&tag!=='BUTTON'&&tag!=='INPUT'&&tag!=='SELECT') focusScanner();
 });
 
-// Guardar estado antes de cerrar pestaña
-window.addEventListener('beforeunload', () => {
-    clearTimeout(saveTimer);
-    if (modoActual === 'comp') saveComp();
-    else if (modoActual === 'inv') saveInv();
-});
+window.addEventListener('beforeunload', ()=>{ clearTimeout(saveTimer); if(modoActual==='comp') saveComp(); });
 </script>
 </body>
 </html>
