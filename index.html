@@ -575,7 +575,9 @@ function cerrarConfirm() {
     confirmCallback = null;
 }
 document.getElementById('btn-confirm-yes').addEventListener('click', () => {
-    cerrarConfirm(); if (confirmCallback) confirmCallback();
+    const cb = confirmCallback;
+    cerrarConfirm();
+    if (cb) cb();
 });
 
 // ── AUDIO ──
@@ -667,21 +669,32 @@ function volverSelector() {
 
 // ── SCANNER COMPARATIVO ──
 const scannerEl = document.getElementById('scanner');
-let bufferBT = '', flushTimer = null;
+let bufferBT = '', flushTimer = null, flushLock = false;
 function flushBuffer() {
+    if (flushLock) return;
+    flushLock = true;
     clearTimeout(flushTimer);
     const cod = bufferBT.trim(); bufferBT = ''; scannerEl.value = '';
     if (cod) procesarCodigo(cod);
+    setTimeout(() => { flushLock = false; }, 300);
 }
 scannerEl.addEventListener('keydown', function(e) {
     if (bloqueado) { e.preventDefault(); return; }
-    if (e.key === 'Enter') { e.preventDefault(); bufferBT = scannerEl.value.trim() || bufferBT.trim(); flushBuffer(); }
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        bufferBT = scannerEl.value.trim() || bufferBT.trim();
+        clearTimeout(flushTimer);
+        flushBuffer();
+    }
 });
 scannerEl.addEventListener('input', function() {
     if (bloqueado) { scannerEl.value=''; return; }
     bufferBT = scannerEl.value;
     clearTimeout(flushTimer);
-    flushTimer = setTimeout(() => { if (bufferBT.length >= 4) flushBuffer(); else { bufferBT=''; scannerEl.value=''; } }, 80);
+    flushTimer = setTimeout(() => {
+        if (bufferBT.length >= 4 && !flushLock) flushBuffer();
+        else { bufferBT=''; scannerEl.value=''; }
+    }, 120);
 });
 
 function procesarCodigo(cod) {
@@ -1209,8 +1222,8 @@ document.getElementById('almInput').addEventListener('change', function(e) {
                     // Cambiar botones del confirm
                     document.getElementById('btn-confirm-yes').textContent = '➕ AGREGAR';
                     document.getElementById('btn-confirm-yes').onclick = () => {
-                        cerrarConfirm();
-                        aplicarCargaAlm(nuevos, 'merge');
+                        const cb = () => aplicarCargaAlm(nuevos, 'merge');
+                        cerrarConfirm(); cb();
                     };
                     // Añadir botón reemplazar
                     let btnR = document.getElementById('btn-confirm-replace');
@@ -1472,20 +1485,26 @@ function movSetInputMode(mode) {
 
 // Scanner del modal de movimiento
 const movScanEl = document.getElementById('mov-scanner');
-let movBufBT='', movFlushTimer=null;
+let movBufBT='', movFlushTimer=null, movFlushLock=false;
+function movFlush() {
+    if (movFlushLock) return;
+    movFlushLock = true;
+    clearTimeout(movFlushTimer);
+    const cod = (movBufBT.trim()||movScanEl.value.trim()).toUpperCase();
+    movBufBT=''; movScanEl.value='';
+    if (cod.length >= 4) { almRegistrarPorCodigo(cod,'',1); cerrarModalMovimiento(); }
+    setTimeout(() => { movFlushLock = false; }, 300);
+}
 movScanEl.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
+        e.preventDefault();
         clearTimeout(movFlushTimer);
-        const cod = (movBufBT.trim()||movScanEl.value.trim()).toUpperCase();
-        movBufBT=''; movScanEl.value='';
-        if (cod.length >= 4) { almRegistrarPorCodigo(cod,'',1); cerrarModalMovimiento(); }
+        movBufBT = movScanEl.value.trim() || movBufBT.trim();
+        movFlush();
     } else if (e.key.length===1) {
         movBufBT += e.key;
         clearTimeout(movFlushTimer);
-        movFlushTimer = setTimeout(() => {
-            const cod = movBufBT.trim().toUpperCase(); movBufBT=''; movScanEl.value='';
-            if (cod.length >= 4) { almRegistrarPorCodigo(cod,'',1); cerrarModalMovimiento(); }
-        }, 180);
+        movFlushTimer = setTimeout(() => { movFlush(); }, 180);
     }
 });
 
