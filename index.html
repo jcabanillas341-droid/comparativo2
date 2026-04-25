@@ -108,6 +108,29 @@
         /* ── MÓDULO ALMACÉN ── */
         #vista-alm { flex-direction: column; padding: 0 8px 8px; gap: 5px; }
 
+        /* ── CÁMARA / OCR MODAL ── */
+        #modal-camara { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 7000; flex-direction: column; align-items: center; justify-content: flex-start; padding: 0; }
+        .cam-header { width: 100%; background: var(--negro); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--rojo); flex-shrink: 0; }
+        .cam-title { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; color: white; letter-spacing: 1px; text-transform: uppercase; }
+        .cam-close { background: none; border: none; color: #aaa; font-size: 22px; cursor: pointer; padding: 0 4px; }
+        #cam-video { width: 100%; max-height: 55vh; object-fit: cover; background: #000; flex-shrink: 0; }
+        .cam-overlay { position: absolute; top: 50px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; pointer-events: none; }
+        .cam-frame { width: 240px; height: 80px; border: 3px solid var(--rojo); border-radius: 8px; box-shadow: 0 0 0 2000px rgba(0,0,0,0.45); position: relative; margin-top: calc(55vh * 0.3); }
+        .cam-frame::before, .cam-frame::after { content: ''; position: absolute; width: 24px; height: 24px; border-color: white; border-style: solid; }
+        .cam-frame::before { top: -3px; left: -3px; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
+        .cam-frame::after  { bottom: -3px; right: -3px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
+        .cam-body { flex: 1; width: 100%; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        #cam-result-box { background: #1a1a1a; border-radius: 10px; padding: 10px 14px; border-left: 4px solid var(--rojo); min-height: 44px; display: flex; align-items: center; gap: 10px; }
+        #cam-result-cod { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; color: var(--rojo-light); letter-spacing: 2px; }
+        #cam-result-desc { font-size: 11px; color: #aaa; flex: 1; line-height: 1.3; }
+        .cam-btn-row { display: flex; gap: 8px; }
+        .cam-btn { flex: 1; padding: 13px; border: none; border-radius: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+        .cam-btn-foto { background: white; color: var(--negro); }
+        .cam-btn-aplicar { background: var(--rojo); color: white; }
+        .cam-btn-aplicar:disabled { background: #555; color: #888; cursor: not-allowed; }
+        #cam-status { font-size: 11px; color: #888; text-align: center; font-family: 'Barlow', sans-serif; }
+        #cam-canvas { display: none; }
+
         /* Barra 3 botones BUSCAR | RETIRO | INGRESO — más pequeños */
         .alm-action-bar { display: flex; gap: 5px; flex-shrink: 0; padding: 3px 0 2px; }
         .alm-btn-buscar { flex: 1.1; padding: 7px 5px; border: 2px solid var(--negro-soft); border-radius: 8px; background: var(--negro-soft); color: var(--blanco); cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; transition: filter 0.15s; }
@@ -362,10 +385,10 @@
         <button onclick="cerrarModal('modalLotes')" style="background:var(--rojo);color:white;padding:14px;border:none;border-radius:10px;width:100%;margin-top:10px;font-size:14px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;">← VOLVER</button>
     </div>
 
-    <!-- ══════ PANEL ALMACÉN v7 ══════ -->
-    <div class="split-view hidden" id="vista-alm">
+    <!-- ══════ PANEL ALMACÉN v8 — TABLAS PARALELAS ══════ -->
+    <div class="split-view hidden" id="vista-alm" style="flex-direction:column;">
 
-        <!-- Barra 3 botones -->
+        <!-- Barra acciones -->
         <div class="alm-action-bar">
             <button class="alm-btn-buscar" onclick="abrirModalBusqueda()">🔍 BUSCAR</button>
             <button class="alm-btn-retiro activo" id="tab-retiro"  onclick="almSetModoYAbrir('retiro')">− RETIRO</button>
@@ -383,37 +406,37 @@
 
         <!-- Filtro rápido -->
         <div style="display:flex;gap:5px;flex-shrink:0;">
-            <input type="text" id="alm-filtro-rapido" placeholder="Filtrar lista..." oninput="renderAlm(this.value.trim().toUpperCase())" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <input type="text" id="alm-filtro-rapido" placeholder="Filtrar por código o nombre..." oninput="renderAlm(this.value.trim().toUpperCase())" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="flex:1;padding:7px 10px;border-radius:7px;border:1px solid var(--gris-borde);background:var(--gris-bg);color:var(--texto);font-size:12px;font-family:'Barlow',sans-serif;">
         </div>
 
-        <!-- Tabla inventario -->
-        <div class="panel" style="flex:1;">
-            <div class="panel-h" id="alm-panel-titulo">INVENTARIO ALMACÉN</div>
-            <div class="scroll">
-                <table>
-                    <thead><tr>
-                        <th style="width:34%;">CÓDIGO</th>
-                        <th>DESCRIPCIÓN</th>
-                        <th style="width:14%;">STOCK</th>
-                    </tr></thead>
-                    <tbody id="t-alm"></tbody>
-                </table>
+        <!-- TABLAS PARALELAS -->
+        <div style="display:flex;flex:1;gap:6px;min-height:0;overflow:hidden;">
+            <div class="panel" style="flex:1.4;">
+                <div class="panel-h" id="alm-panel-titulo">INVENTARIO ALMACÉN</div>
+                <div class="scroll">
+                    <table>
+                        <thead><tr>
+                            <th style="width:36%;">CÓDIGO</th>
+                            <th>DESCRIPCIÓN</th>
+                            <th style="width:16%;">STOCK</th>
+                        </tr></thead>
+                        <tbody id="t-alm"></tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-
-        <!-- Historial movimientos -->
-        <div class="panel" style="max-height:120px;flex-shrink:0;">
-            <div class="panel-h">ÚLTIMOS MOVIMIENTOS</div>
-            <div class="scroll">
-                <table>
-                    <thead><tr>
-                        <th style="width:26px;">#</th>
-                        <th>CÓDIGO</th>
-                        <th style="width:30px;">MOV</th>
-                        <th style="width:40px;">STOCK</th>
-                    </tr></thead>
-                    <tbody id="t-alm-mov"></tbody>
-                </table>
+            <div class="panel" style="flex:1;">
+                <div class="panel-h">MOVIMIENTOS</div>
+                <div class="scroll">
+                    <table>
+                        <thead><tr>
+                            <th style="width:24px;">#</th>
+                            <th>CÓDIGO</th>
+                            <th style="width:28px;">MOV</th>
+                            <th style="width:38px;">STK</th>
+                        </tr></thead>
+                        <tbody id="t-alm-mov"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -423,6 +446,38 @@
             <button class="alm-footer-btn" style="background:var(--negro);color:white;" onclick="almGuardarSnapshot()">💾 GUARDAR</button>
             <button class="alm-footer-btn" style="background:var(--gris-bg);color:#2E7D32;border:1px solid #2E7D32;" onclick="almExportar()">📊 EXCEL</button>
             <button class="alm-footer-btn" style="background:var(--gris-bg);color:var(--rojo);border:1px solid var(--rojo);" onclick="resetearModulo()">🗑️ RESET</button>
+        </div>
+    </div>
+
+    <!-- ══════ MODAL CÁMARA OCR ══════ -->
+    <div id="modal-camara" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:7000;flex-direction:column;align-items:stretch;">
+        <div style="background:var(--negro);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--rojo);flex-shrink:0;">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;color:white;letter-spacing:1px;text-transform:uppercase;">📸 LEER CÓDIGO CON CÁMARA</span>
+            <button onclick="cerrarCamara()" style="background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;">✕</button>
+        </div>
+        <div style="position:relative;width:100%;flex-shrink:0;background:#000;max-height:55vmax;overflow:hidden;">
+            <video id="cam-video" autoplay playsinline muted style="width:100%;display:block;max-height:55vmax;object-fit:cover;"></video>
+            <div style="position:absolute;inset:0;display:flex;justify-content:center;align-items:center;pointer-events:none;">
+                <div style="width:260px;height:90px;border:3px solid var(--rojo);border-radius:8px;box-shadow:0 0 0 2000px rgba(0,0,0,0.5);">
+                    <span style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(255,255,255,0.85);white-space:nowrap;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;">▸ CENTRAR CÓDIGO DE BARRAS AQUÍ ◂</span>
+                </div>
+            </div>
+        </div>
+        <canvas id="cam-canvas" style="display:none;"></canvas>
+        <div style="flex:1;padding:12px 14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;">
+            <div id="cam-status" style="font-size:11px;color:#888;text-align:center;font-family:'Barlow',sans-serif;">Apunta la cámara al código y presiona TOMAR FOTO</div>
+            <div style="background:#1a1a1a;border-radius:10px;padding:10px 14px;border-left:4px solid var(--rojo);min-height:50px;">
+                <div id="cam-result-cod" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#555;letter-spacing:3px;">— SIN LECTURA —</div>
+                <div id="cam-result-desc" style="font-size:11px;color:#aaa;margin-top:3px;line-height:1.3;">Aún no hay código detectado</div>
+            </div>
+            <div>
+                <span style="font-size:10px;color:var(--gris-mid);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Corregir / ingresar código manualmente:</span>
+                <input type="text" id="cam-manual-input" placeholder="Editar código aquí..." style="width:100%;padding:10px 12px;border-radius:8px;border:2px solid var(--gris-borde);background:var(--gris-bg);font-size:16px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2px;color:var(--texto);" oninput="onCamManualInput(this.value)" autocomplete="off" autocorrect="off" autocapitalize="characters">
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button onclick="tomarFoto()" style="flex:1;padding:14px;border:none;border-radius:10px;background:white;color:var(--negro);font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">📷 TOMAR FOTO</button>
+                <button id="cam-btn-aplicar" disabled onclick="aplicarCodigoCamara()" style="flex:1;padding:14px;border:none;border-radius:10px;background:var(--rojo);color:white;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;letter-spacing:1px;text-transform:uppercase;cursor:pointer;opacity:0.4;">✅ USAR CÓDIGO</button>
+            </div>
         </div>
     </div>
 
@@ -492,6 +547,7 @@
             <div id="mov-modo-lectora">
                 <span class="mov-scanner-label">📡 PISTOLA BT — Escanea aquí</span>
                 <input type="text" id="mov-scanner" inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Esperando...">
+                <button onclick="abrirCamara()" style="width:100%;margin-top:8px;padding:11px;border:2px dashed var(--gris-borde);border-radius:8px;background:var(--gris-bg);color:var(--rojo);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase;">📸 INGRESAR CON FOTO DE CÓDIGO</button>
             </div>
 
             <!-- Modo manual -->
@@ -759,11 +815,18 @@ document.getElementById('compStockInput').addEventListener('change', function(e)
 });
 
 // ── ALMACÉN SAVE/LOAD ──
+let almSaveTimer = null;
+function schedSaveAlm() {
+    clearTimeout(almSaveTimer);
+    almSaveTimer = setTimeout(saveAlm, 800);
+}
 function saveAlm() {
     try {
-        localStorage.setItem('p_alm_v1', JSON.stringify(Object.fromEntries([...almMap.entries()])));
-        localStorage.setItem('p_alm_movs_v1', JSON.stringify(almMovs.slice(-200)));
-    } catch(e) {}
+        const data = {};
+        almMap.forEach((v, k) => { data[k] = v; });
+        localStorage.setItem('p_alm_v1', JSON.stringify(data));
+        localStorage.setItem('p_alm_movs_v1', JSON.stringify(almMovs.slice(-300)));
+    } catch(e) { showToast('⚠️ Error guardando almacén', '#c62828'); }
 }
 function loadStateAlm() {
     try {
@@ -873,7 +936,7 @@ function almRegistrarPorCodigo(cod, desc='', cant=1) {
         almMovs.push({cod, tipo:'INGRESO', cant, stockPost:v.stock});
         showToast(`+ INGRESO: ${v.desc||cod} | Stock: ${v.stock}`, '#D32F2F');
     }
-    beepOK(); saveAlm();
+    beepOK(); schedSaveAlm();
     renderAlm(document.getElementById('alm-filtro-rapido')?.value?.trim().toUpperCase()||'');
 }
 
@@ -882,7 +945,7 @@ function almDeshacer() {
     const mv = almMovs.pop();
     const v  = almMap.get(mv.cod);
     if (v) { if (mv.tipo==='RETIRO') v.stock+=mv.cant; else v.stock-=mv.cant; if(v.stock<0) v.stock=0; }
-    saveAlm(); toggleMenu(); beep(660,0.08);
+    schedSaveAlm(); toggleMenu(); beep(660,0.08);
     showToast(`↩️ Deshecho: ${mv.tipo} de ${mv.cod}`, '#E65100');
     renderAlm(document.getElementById('alm-filtro-rapido')?.value?.trim().toUpperCase()||'');
 }
@@ -998,9 +1061,10 @@ function ejecutarBusqueda() {
     let res = [];
     for (const [cod,v] of almMap) {
         let match = false;
+        // Búsqueda PARCIAL: incluye todo lo que contenga el texto buscado
         if (tipo==='codigo13')  match = cod.includes(q);
-        else if (tipo==='codigo7') match = /^\d{1,7}$/.test(q) && cod.includes(q);
-        else match = (v.desc||'').toUpperCase().includes(q);
+        else if (tipo==='codigo7') match = cod.includes(q);  // parcial también
+        else match = (v.desc||'').toUpperCase().includes(q) || cod.includes(q);
         if (match) res.push([cod,v]);
     }
     res.sort((a,b)=>b[1].stock-a[1].stock);
@@ -1008,14 +1072,22 @@ function ejecutarBusqueda() {
 
     if (!res.length) { cont.innerHTML=`<div class="busq-empty">Sin resultados para "${q}"</div>`; return; }
     cont.innerHTML = '';
-    res.slice(0,30).forEach(([cod,v]) => {
+    res.slice(0,50).forEach(([cod,v]) => {
         const stockColor = v.stock===0 ? '#B71C1C' : v.stock<=2 ? '#E65100' : '#1B5E20';
         const item = document.createElement('div');
         item.className = 'busq-item';
-        item.innerHTML = `<div class="busq-item-desc">${v.desc||'(sin descripción)'}<span class="busq-item-cod">${cod}</span></div><span class="busq-item-stock" style="color:${stockColor};">${v.stock}</span>`;
+        // Resaltar texto buscado
+        const descTxt = v.desc||'(sin descripción)';
+        item.innerHTML = `<div class="busq-item-desc">${descTxt}<span class="busq-item-cod">${cod}</span></div><span class="busq-item-stock" style="color:${stockColor};">${v.stock}</span>`;
         item.addEventListener('click', () => { cerrarModalBusqueda(); abrirModalMovimiento(cod); });
         cont.appendChild(item);
     });
+    if (res.length > 50) {
+        const more = document.createElement('div');
+        more.className = 'busq-empty';
+        more.textContent = `... y ${res.length-50} más. Refina la búsqueda.`;
+        cont.appendChild(more);
+    }
 }
 
 // ══════════════════════════════════════════════════════
@@ -1335,7 +1407,175 @@ document.addEventListener('click', (e) => {
     if (!bloqueado&&modoActual&&modoActual!=='alm'&&tag!=='BUTTON'&&tag!=='INPUT'&&tag!=='SELECT') focusScanner();
 });
 
-window.addEventListener('beforeunload', ()=>{ clearTimeout(saveTimer); if(modoActual==='comp') saveComp(); });
+// ══════════════════════════════════════════════════════
+//  CÁMARA OCR — LEER CÓDIGO CON FOTO
+// ══════════════════════════════════════════════════════
+let camStream = null;
+let camCodDetectado = '';
+
+function abrirCamara() {
+    cerrarModalMovimiento();
+    const modal = document.getElementById('modal-camara');
+    modal.style.display = 'flex';
+    document.getElementById('cam-result-cod').textContent  = '— SIN LECTURA —';
+    document.getElementById('cam-result-cod').style.color  = '#555';
+    document.getElementById('cam-result-desc').textContent = 'Apunta al código y toma la foto';
+    document.getElementById('cam-manual-input').value = '';
+    document.getElementById('cam-btn-aplicar').disabled = true;
+    document.getElementById('cam-btn-aplicar').style.opacity = '0.4';
+    document.getElementById('cam-status').textContent = 'Iniciando cámara...';
+    camCodDetectado = '';
+
+    const constraints = {
+        video: {
+            facingMode: { ideal: 'environment' },
+            width:  { ideal: 1280 },
+            height: { ideal: 720 }
+        }
+    };
+
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+            camStream = stream;
+            const video = document.getElementById('cam-video');
+            video.srcObject = stream;
+            video.play();
+            document.getElementById('cam-status').textContent = 'Cámara lista. Apunta al código y presiona TOMAR FOTO';
+        })
+        .catch(err => {
+            document.getElementById('cam-status').textContent = '⚠️ Sin acceso a cámara. Ingresa el código manualmente.';
+            console.error('Cam error:', err);
+        });
+}
+
+function cerrarCamara() {
+    if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+    document.getElementById('modal-camara').style.display = 'none';
+    camCodDetectado = '';
+}
+
+function tomarFoto() {
+    const video  = document.getElementById('cam-video');
+    const canvas = document.getElementById('cam-canvas');
+    const status = document.getElementById('cam-status');
+
+    if (!camStream || video.readyState < 2) {
+        status.textContent = '⚠️ Cámara no está lista.'; return;
+    }
+
+    // Capturar frame completo
+    canvas.width  = video.videoWidth  || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    status.textContent = '🔍 Analizando imagen...';
+
+    // Intentar leer con BarcodeDetector API (nativo, sin librería)
+    if ('BarcodeDetector' in window) {
+        const detector = new BarcodeDetector({ formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code','data_matrix'] });
+        detector.detect(canvas)
+            .then(barcodes => {
+                if (barcodes.length > 0) {
+                    const cod = barcodes[0].rawValue.trim().toUpperCase();
+                    usarCodigoDetectado(cod, `Detectado: ${barcodes[0].format}`);
+                } else {
+                    // Intentar con zona recortada (área central donde está el marco rojo)
+                    intentarZonaCentral(canvas, ctx, video);
+                }
+            })
+            .catch(() => intentarZonaCentral(canvas, ctx, video));
+    } else {
+        // Sin BarcodeDetector — ofrecer entrada manual con imagen visible
+        status.textContent = '⚠️ Este navegador no detecta códigos automáticamente. Revisa la foto e ingresa el código manualmente.';
+        mostrarImagenCapturada(canvas);
+    }
+}
+
+function intentarZonaCentral(canvas, ctx, video) {
+    // Recortar solo la zona central (donde está el marco guía)
+    const cw = canvas.width, ch = canvas.height;
+    const cropW = Math.min(cw * 0.75, 520);
+    const cropH = Math.min(ch * 0.35, 160);
+    const cropX = (cw - cropW) / 2;
+    const cropY = (ch - cropH) / 2;
+
+    const c2 = document.createElement('canvas');
+    c2.width = cropW; c2.height = cropH;
+    c2.getContext('2d').drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+    if ('BarcodeDetector' in window) {
+        const detector = new BarcodeDetector({ formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e'] });
+        detector.detect(c2)
+            .then(barcodes => {
+                if (barcodes.length > 0) {
+                    usarCodigoDetectado(barcodes[0].rawValue.trim().toUpperCase(), 'Detectado (zona central)');
+                } else {
+                    document.getElementById('cam-status').textContent = '⚠️ No se detectó código. Acerca más la cámara e intenta de nuevo, o ingresa el código manualmente.';
+                    mostrarImagenCapturada(canvas);
+                }
+            })
+            .catch(() => {
+                document.getElementById('cam-status').textContent = '⚠️ Error al detectar. Ingresa el código manualmente.';
+                mostrarImagenCapturada(canvas);
+            });
+    } else {
+        document.getElementById('cam-status').textContent = '⚠️ Ingresa el código manualmente.';
+        mostrarImagenCapturada(canvas);
+    }
+}
+
+function mostrarImagenCapturada(canvas) {
+    // Mostrar preview en el video area
+    const video = document.getElementById('cam-video');
+    video.style.display = 'none';
+    const preview = document.createElement('img');
+    preview.src = canvas.toDataURL('image/jpeg', 0.85);
+    preview.style.cssText = 'width:100%;max-height:55vmax;object-fit:contain;background:#000;display:block;';
+    preview.id = 'cam-preview-img';
+    video.parentNode.insertBefore(preview, video);
+    document.getElementById('cam-manual-input').focus();
+}
+
+function usarCodigoDetectado(cod, fuente) {
+    camCodDetectado = cod;
+    document.getElementById('cam-result-cod').textContent  = cod;
+    document.getElementById('cam-result-cod').style.color  = 'var(--rojo-light)';
+    const prod = almMap.get(cod);
+    document.getElementById('cam-result-desc').textContent = prod ? prod.desc || '(producto sin descripción)' : '⚠️ Código no está en inventario — se puede ingresar igual';
+    document.getElementById('cam-manual-input').value = cod;
+    document.getElementById('cam-btn-aplicar').disabled = false;
+    document.getElementById('cam-btn-aplicar').style.opacity = '1';
+    document.getElementById('cam-status').textContent = `✅ ${fuente} — revisa y presiona USAR CÓDIGO`;
+    beepOK();
+}
+
+function onCamManualInput(val) {
+    const cod = val.trim().toUpperCase();
+    camCodDetectado = cod;
+    const btnA = document.getElementById('cam-btn-aplicar');
+    if (cod.length >= 4) {
+        btnA.disabled = false;
+        btnA.style.opacity = '1';
+        const prod = almMap.get(cod);
+        document.getElementById('cam-result-cod').textContent  = cod;
+        document.getElementById('cam-result-cod').style.color  = 'var(--rojo-light)';
+        document.getElementById('cam-result-desc').textContent = prod ? prod.desc || '(sin descripción)' : '⚠️ No encontrado en inventario';
+    } else {
+        btnA.disabled = true;
+        btnA.style.opacity = '0.4';
+    }
+}
+
+function aplicarCodigoCamara() {
+    const cod = camCodDetectado.trim().toUpperCase();
+    if (!cod || cod.length < 4) { showToast('⚠️ Código muy corto', '#E65100'); return; }
+    cerrarCamara();
+    // Abrir modal de movimiento con el código pre-seleccionado
+    abrirModalMovimiento(cod);
+}
+
+window.addEventListener('beforeunload', ()=>{ clearTimeout(saveTimer); clearTimeout(almSaveTimer); if(modoActual==='comp') saveComp(); if(modoActual==='alm') saveAlm(); });
 </script>
 </body>
 </html>
