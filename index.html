@@ -2,10 +2,17 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Pieers Auditor PRO v7</title>
+    <title>PIEERS PRO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PIEERS PRO">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="PIEERS PRO">
+    <meta name="description" content="Auditoría y almacén de inventario profesional">
+    <link rel="manifest" id="pwa-manifest">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap');
 
@@ -106,41 +113,24 @@
         .card-lote  { background: #1a1a1a; padding: 14px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--rojo); }
         .hidden     { display: none !important; }
 
-        /* ── MÓDULO ALMACÉN ── */
-        #vista-alm { flex-direction: column; padding: 0 8px 8px; gap: 5px; }
+        /* ── PWA INSTALL BANNER ── */
+        #pwa-banner { display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:var(--negro); border-top:3px solid var(--rojo); padding:12px 16px; flex-direction:row; align-items:center; gap:10px; box-shadow:0 -4px 20px rgba(0,0,0,0.6); }
+        #pwa-banner.visible { display:flex; }
+        .pwa-banner-icon { font-size:28px; flex-shrink:0; }
+        .pwa-banner-txt { flex:1; }
+        .pwa-banner-txt strong { display:block; font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:900; color:white; letter-spacing:1px; }
+        .pwa-banner-txt span { font-size:11px; color:#888; font-family:'Barlow',sans-serif; }
+        .pwa-banner-btn { padding:10px 16px; border:none; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:900; cursor:pointer; white-space:nowrap; }
+        .pwa-install-btn { background:var(--rojo); color:white; }
+        .pwa-dismiss-btn { background:#222; color:#666; font-size:18px; padding:8px 12px; }
 
-        /* ── CÁMARA / OCR MODAL ── */
-        #modal-camara { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 7000; flex-direction: column; align-items: center; justify-content: flex-start; padding: 0; }
-        .cam-header { width: 100%; background: var(--negro); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--rojo); flex-shrink: 0; }
-        .cam-title { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; color: white; letter-spacing: 1px; text-transform: uppercase; }
-        .cam-close { background: none; border: none; color: #aaa; font-size: 22px; cursor: pointer; padding: 0 4px; }
-        #cam-video { width: 100%; max-height: 55vh; object-fit: cover; background: #000; flex-shrink: 0; }
-        .cam-overlay { position: absolute; top: 50px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; pointer-events: none; }
-        .cam-frame { width: 240px; height: 80px; border: 3px solid var(--rojo); border-radius: 8px; box-shadow: 0 0 0 2000px rgba(0,0,0,0.45); position: relative; margin-top: calc(55vh * 0.3); }
-        .cam-frame::before, .cam-frame::after { content: ''; position: absolute; width: 24px; height: 24px; border-color: white; border-style: solid; }
-        .cam-frame::before { top: -3px; left: -3px; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
-        .cam-frame::after  { bottom: -3px; right: -3px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
-        .cam-body { flex: 1; width: 100%; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
-        #cam-result-box { background: #1a1a1a; border-radius: 10px; padding: 10px 14px; border-left: 4px solid var(--rojo); min-height: 44px; display: flex; align-items: center; gap: 10px; }
-        #cam-result-cod { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; color: var(--rojo-light); letter-spacing: 2px; }
-        #cam-result-desc { font-size: 11px; color: #aaa; flex: 1; line-height: 1.3; }
-        .cam-btn-row { display: flex; gap: 8px; }
-        .cam-btn { flex: 1; padding: 13px; border: none; border-radius: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
-        .cam-btn-foto { background: white; color: var(--negro); }
-        .cam-btn-aplicar { background: var(--rojo); color: white; }
-        .cam-btn-aplicar:disabled { background: #555; color: #888; cursor: not-allowed; }
-        #cam-status { font-size: 11px; color: #888; text-align: center; font-family: 'Barlow', sans-serif; }
-        #cam-canvas { display: none; }
 
-        /* Barra 3 botones BUSCAR | RETIRO | INGRESO — más pequeños */
+        /* Barra botones BUSCAR | RETIRO */
         .alm-action-bar { display: flex; gap: 5px; flex-shrink: 0; padding: 3px 0 2px; }
-        .alm-btn-buscar { flex: 1.1; padding: 7px 5px; border: 2px solid var(--negro-soft); border-radius: 8px; background: var(--negro-soft); color: var(--blanco); cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; transition: filter 0.15s; }
+        .alm-btn-buscar { flex: 1; padding: 9px 5px; border: 2px solid var(--negro-soft); border-radius: 8px; background: var(--negro-soft); color: var(--blanco); cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; transition: filter 0.15s; }
         .alm-btn-buscar:active { filter: brightness(0.85); }
-        .alm-btn-retiro { flex: 1; padding: 7px 5px; border: 2px solid #333; border-radius: 8px; background: #1A1A1A; color: #888; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: all 0.15s; }
-        .alm-btn-retiro.activo { background: var(--negro); color: white; border-color: #FF5252; }
-        .alm-btn-ingreso { flex: 1; padding: 7px 5px; border: 2px solid #333; border-radius: 8px; background: #1A1A1A; color: #888; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: all 0.15s; }
-        .alm-btn-ingreso.activo { background: var(--rojo); color: white; border-color: var(--rojo-dark); }
-        .alm-btn-retiro:active, .alm-btn-ingreso:active { filter: brightness(0.85); }
+        .alm-btn-retiro { flex: 1.6; padding: 9px 5px; border: 2px solid var(--rojo); border-radius: 8px; background: var(--negro); color: white; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; transition: all 0.15s; }
+        .alm-btn-retiro:active { filter: brightness(0.85); }
 
         #alm-estado-badge { font-size: 11px; color: var(--gris-mid); flex-shrink: 0; text-align: center; padding: 3px 8px; background: var(--gris-bg); border-radius: 6px; border: 1px solid var(--gris-borde); }
 
@@ -275,6 +265,16 @@
             <span class="desc">Carga stock → busca productos → registra retiros e ingresos.</span>
         </span>
     </button>
+
+    <!-- Botón instalar app -->
+    <button id="btn-instalar-app" onclick="pwaInstalar()" style="display:none;width:100%;padding:14px 16px;border:2px dashed #333;border-radius:12px;cursor:pointer;text-align:left;align-items:center;gap:14px;background:transparent;margin-top:4px;">
+        <span style="font-size:26px;min-width:36px;text-align:center;">📲</span>
+        <span style="display:flex;flex-direction:column;">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;color:white;text-transform:uppercase;">INSTALAR COMO APP</span>
+            <span style="font-size:11px;font-weight:400;margin-top:3px;color:#555;line-height:1.4;">Descarga en tu celular para usar sin internet</span>
+        </span>
+    </button>
+    <div style="font-size:10px;color:#333;text-align:center;margin-top:2px;">v10.0 — PIEERS AUDITOR PRO</div>
 </div>
 
 <!-- ══════ APP PRINCIPAL ══════ -->
@@ -297,6 +297,8 @@
             <button id="btn-alm-deshacer" onclick="almDeshacer()" class="hidden">↩️ Deshacer último movimiento</button>
             <button id="btn-alm-guardar" onclick="almGuardarSnapshot()" class="hidden">💾 Guardar estado almacén</button>
             <button id="btn-alm-exportar" onclick="almExportar()" class="hidden">📊 Exportar almacén (Excel)</button>
+            <div class="menu-section">App</div>
+            <button onclick="pwaInstalar();toggleMenu();">📲 Instalar app en celular</button>
             <div class="menu-section">Sesión</div>
             <button id="btn-guardar-lote" onclick="guardarLote()">💾 Guardar auditoría actual</button>
             <button onclick="abrirModal('modalLotes')">📂 Reportes guardados</button>
@@ -359,7 +361,7 @@
         <div class="panel">
             <div class="panel-h">FLUJO DE LECTURA</div>
             <div class="scroll">
-                <table><thead><tr><th style="width:28px;">#</th><th>CÓDIGO</th></tr></thead>
+                <table><thead><tr><th style="width:28px;">#</th><th>CÓDIGO</th><th style="width:22px;"></th></tr></thead>
                 <tbody id="t-lectura"></tbody></table>
             </div>
         </div>
@@ -391,9 +393,8 @@
 
         <!-- Barra acciones -->
         <div class="alm-action-bar">
-            <button class="alm-btn-buscar" onclick="abrirModalBusqueda()">🔍 BUSCAR</button>
-            <button class="alm-btn-retiro activo" id="tab-retiro"  onclick="almSetModoYAbrir('retiro')">− RETIRO</button>
-            <button class="alm-btn-ingreso"        id="tab-ingreso" onclick="almSetModoYAbrir('ingreso')">+ INGRESO</button>
+            <button class="alm-btn-buscar" onclick="abrirModalBusqueda()">🔍 AUTOBÚS</button>
+            <button class="alm-btn-retiro" id="tab-retiro" onclick="abrirModalMovimiento()">− REGISTRADOR RETIRO</button>
         </div>
 
         <!-- Badge -->
@@ -402,8 +403,10 @@
         <!-- Carga -->
         <div class="alm-load-row">
             <button class="alm-load-btn" style="background:var(--negro);color:var(--blanco);" onclick="document.getElementById('almInput').click()">📥 CARGAR INV.</button>
-            <button class="alm-load-btn" style="background:var(--gris-bg);color:var(--negro);border:1px solid var(--gris-borde);" onclick="document.getElementById('almStockInput').click()">🔄 STOCK → ALM.</button>
+            <button class="alm-load-btn" style="background:var(--gris-bg);color:var(--rojo);border:2px solid var(--rojo);font-weight:900;" onclick="document.getElementById('almInputMas').click()">＋ AGREGAR MÁS</button>
+            <button class="alm-load-btn" style="background:var(--gris-bg);color:var(--negro);border:1px solid var(--gris-borde);" onclick="document.getElementById('almStockInput').click()">🔄 STOCK</button>
         </div>
+        <input type="file" id="almInputMas" accept=".xlsx,.xls,.csv" multiple style="display:none;">
 
         <!-- Filtro rápido -->
         <div style="display:flex;gap:5px;flex-shrink:0;">
@@ -419,7 +422,7 @@
                         <thead><tr>
                             <th style="width:36%;">CÓDIGO</th>
                             <th>DESCRIPCIÓN</th>
-                            <th style="width:16%;">STOCK</th>
+                            <th style="width:16%;">EXIST.</th>
                         </tr></thead>
                         <tbody id="t-alm"></tbody>
                     </table>
@@ -430,10 +433,11 @@
                 <div class="scroll">
                     <table>
                         <thead><tr>
-                            <th style="width:24px;">#</th>
+                            <th style="width:20px;">#</th>
                             <th>CÓDIGO</th>
-                            <th style="width:28px;">MOV</th>
-                            <th style="width:38px;">STK</th>
+                            <th style="width:36px;">MOV</th>
+                            <th style="width:28px;">STK</th>
+                            <th style="width:18px;"></th>
                         </tr></thead>
                         <tbody id="t-alm-mov"></tbody>
                     </table>
@@ -444,65 +448,13 @@
         <!-- Footer almacén -->
         <div class="alm-footer-row">
             <button class="alm-footer-btn" style="background:var(--gris-bg);color:#E65100;border:1px solid #E65100;" onclick="almDeshacer()">↩️ DESHACER</button>
-            <button class="alm-footer-btn" style="background:var(--negro);color:white;" onclick="almGuardarSnapshot()">💾 GUARDAR</button>
-            <button class="alm-footer-btn" style="background:var(--gris-bg);color:#2E7D32;border:1px solid #2E7D32;" onclick="almExportar()">📊 EXCEL</button>
-            <button class="alm-footer-btn" style="background:var(--gris-bg);color:var(--rojo);border:1px solid var(--rojo);" onclick="resetearModulo()">🗑️ RESET</button>
+            <button class="alm-footer-btn" style="background:var(--negro);color:white;" onclick="almGuardarYVerInformes()">💾 GUARDAR</button>
+            <button class="alm-footer-btn" style="background:var(--gris-bg);color:#F9A825;border:1px solid #F9A825;" onclick="abrirModalAlmInformes()">📋 INFORMES</button>
+            <button class="alm-footer-btn" style="background:var(--gris-bg);color:var(--rojo);border:1px solid var(--rojo);" onclick="resetearModulo()">🗑️ REINICIAR</button>
         </div>
     </div>
 
-    <!-- ══════ MODAL CÁMARA — SCANNER CONTINUO ══════ -->
-    <div id="modal-camara" style="display:none;position:fixed;inset:0;background:#000;z-index:7500;flex-direction:column;">
-        <!-- Header -->
-        <div style="background:var(--negro);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--rojo);flex-shrink:0;">
-            <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;color:white;letter-spacing:1px;">📷 ESCANEAR CON CÁMARA</span>
-            <button onclick="cerrarCamara()" style="background:rgba(255,255,255,0.1);border:none;color:white;font-size:20px;cursor:pointer;padding:4px 10px;border-radius:6px;">✕</button>
-        </div>
 
-        <!-- Video area con overlay de guía -->
-        <div style="position:relative;flex:1;background:#000;overflow:hidden;min-height:0;">
-            <video id="cam-video" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block;"></video>
-            <!-- Marco guía animado -->
-            <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;pointer-events:none;">
-                <div style="color:rgba(255,255,255,0.7);font-size:11px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;margin-bottom:10px;text-align:center;">APUNTA AL CÓDIGO DE BARRAS</div>
-                <div id="cam-frame-box" style="width:280px;height:100px;position:relative;">
-                    <!-- Sombra lateral -->
-                    <div style="position:absolute;inset:-200px -500px;background:rgba(0,0,0,0.55);clip-path:polygon(0 0,100% 0,100% 100%,0 100%,0 calc(200px + 0px),500px calc(200px + 0px),500px calc(200px + 100px),0 calc(200px + 100px));"></div>
-                    <!-- Marco rojo -->
-                    <div style="position:absolute;inset:0;border:3px solid var(--rojo);border-radius:8px;box-shadow:0 0 0 2000px rgba(0,0,0,0.5);">
-                        <!-- Esquinas blancas -->
-                        <div style="position:absolute;top:-2px;left:-2px;width:22px;height:22px;border-top:4px solid white;border-left:4px solid white;border-radius:6px 0 0 0;"></div>
-                        <div style="position:absolute;top:-2px;right:-2px;width:22px;height:22px;border-top:4px solid white;border-right:4px solid white;border-radius:0 6px 0 0;"></div>
-                        <div style="position:absolute;bottom:-2px;left:-2px;width:22px;height:22px;border-bottom:4px solid white;border-left:4px solid white;border-radius:0 0 0 6px;"></div>
-                        <div style="position:absolute;bottom:-2px;right:-2px;width:22px;height:22px;border-bottom:4px solid white;border-right:4px solid white;border-radius:0 0 6px 0;"></div>
-                        <!-- Línea de escaneo animada -->
-                        <div id="cam-scan-line" style="position:absolute;left:4px;right:4px;height:2px;background:linear-gradient(90deg,transparent,var(--rojo),transparent);top:0;animation:scanLine 1.8s ease-in-out infinite;"></div>
-                    </div>
-                </div>
-                <div id="cam-status-overlay" style="color:rgba(255,255,255,0.75);font-size:11px;font-family:'Barlow',sans-serif;margin-top:10px;text-align:center;">Iniciando cámara...</div>
-            </div>
-        </div>
-
-        <!-- Panel resultado (bajo el video) -->
-        <div style="background:var(--negro-soft);padding:10px 14px;flex-shrink:0;border-top:2px solid #2a2a2a;">
-            <div id="cam-result-box" style="background:#111;border-radius:10px;padding:10px 14px;border-left:4px solid #333;margin-bottom:10px;">
-                <div id="cam-result-cod" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#444;letter-spacing:3px;">— EN ESPERA —</div>
-                <div id="cam-result-desc" style="font-size:11px;color:#666;margin-top:3px;">Apunta la cámara a un código de barras</div>
-            </div>
-            <!-- Entrada manual -->
-            <div style="display:flex;gap:8px;margin-bottom:8px;">
-                <input type="text" id="cam-manual-input" placeholder="O escribe el código manualmente..." inputmode="numeric"
-                    style="flex:1;padding:10px 12px;border-radius:8px;border:2px solid #333;background:#1a1a1a;font-size:15px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2px;color:white;"
-                    oninput="onCamManualInput(this.value)" autocomplete="off" autocorrect="off" autocapitalize="characters">
-                <button id="cam-btn-aplicar" disabled onclick="aplicarCodigoCamara()"
-                    style="padding:10px 16px;border:none;border-radius:8px;background:#333;color:#666;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;letter-spacing:1px;cursor:not-allowed;white-space:nowrap;transition:all 0.2s;">
-                    ✅ USAR
-                </button>
-            </div>
-        </div>
-    </div>
-    <style>
-        @keyframes scanLine { 0%{top:0%} 50%{top:calc(100% - 2px)} 100%{top:0%} }
-    </style>
 
     <!-- LOADING -->
     <div id="loading-overlay"><div class="spinner"></div><div id="loading-txt">Cargando...</div></div>
@@ -570,7 +522,6 @@
             <div id="mov-modo-lectora">
                 <span class="mov-scanner-label">📡 PISTOLA BT — Escanea aquí</span>
                 <input type="text" id="mov-scanner" inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Esperando...">
-                <button onclick="abrirCamara()" style="width:100%;margin-top:8px;padding:11px;border:2px dashed var(--gris-borde);border-radius:8px;background:var(--gris-bg);color:var(--rojo);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase;">📸 INGRESAR CON FOTO DE CÓDIGO</button>
             </div>
 
             <!-- Modo manual -->
@@ -657,42 +608,54 @@ function hideLoading()     { document.getElementById('loading-overlay').style.di
 
 // ── SELECTOR MODO ──
 function seleccionarModo(modo) {
-    modoActual = modo;
-    document.getElementById('pantalla-modo').style.display = 'none';
-    document.getElementById('app-principal').classList.remove('hidden');
-    document.getElementById('vista-comp').classList.add('hidden');
-    document.getElementById('vista-alm').classList.add('hidden');
-    document.getElementById('footer-comp').classList.add('hidden');
-    document.getElementById('comp-file-btns').style.display = 'none';
-    ['btn-carga','btn-stock'].forEach(id => document.getElementById(id).style.display = 'none');
-    document.getElementById('menu-sec-alm').classList.add('hidden');
-    document.getElementById('menu-sec-comp').classList.add('hidden');
-    ['btn-alm-deshacer','btn-alm-guardar','btn-alm-exportar'].forEach(id => document.getElementById(id).classList.add('hidden'));
-    document.getElementById('btn-guardar-lote').style.display = 'block';
-    document.getElementById('scanner').style.display = modo === 'alm' ? 'none' : '';
-    document.getElementById('panel-desc').style.display = 'none';
-    document.querySelector('.progress-box').style.display = modo === 'alm' ? 'none' : '';
+    try {
+        modoActual = modo;
+        const $ = id => document.getElementById(id);
+        const $s = id => { const el=$( id); if(el) return el; console.warn('Missing:',id); return {style:{},classList:{add:()=>{},remove:()=>{}},textContent:''}; };
 
-    if (modo === 'comp') {
-        document.body.className = 'modo-comp';
-        document.getElementById('badge-txt').textContent = 'COMPARATIVO';
-        document.getElementById('menu-sec-comp').classList.remove('hidden');
-        ['btn-carga','btn-stock'].forEach(id => document.getElementById(id).style.display = 'block');
-        document.getElementById('vista-comp').classList.remove('hidden');
-        document.getElementById('footer-comp').classList.remove('hidden');
-        document.getElementById('comp-file-btns').style.display = 'flex';
-        document.getElementById('blq-esp').style.display  = '';
-        document.getElementById('blq-avan').style.display = '';
-        document.getElementById('scanner').placeholder = 'ESCANEE CÓDIGO (13 DÍGITOS)';
-        loadStateComp(); renderComp(); focusScanner();
-    } else {
-        document.body.className = 'modo-alm';
-        document.getElementById('badge-txt').textContent = 'ALMACÉN';
-        document.getElementById('menu-sec-alm').classList.remove('hidden');
-        ['btn-alm-deshacer','btn-alm-guardar','btn-alm-exportar'].forEach(id => document.getElementById(id).classList.remove('hidden'));
-        document.getElementById('btn-guardar-lote').style.display = 'none';
-        document.getElementById('vista-alm').classList.remove('hidden');
-        loadStateAlm(); renderAlm();
+        $s('pantalla-modo').style.display = 'none';
+        $s('app-principal').classList.remove('hidden');
+        $s('vista-comp').classList.add('hidden');
+        $s('vista-alm').classList.add('hidden');
+        $s('footer-comp').classList.add('hidden');
+
+        const compFileBtns = $('comp-file-btns');
+        if (compFileBtns) compFileBtns.style.display = 'none';
+        ['btn-carga','btn-stock'].forEach(id => { const el=$(id); if(el) el.style.display='none'; });
+        $s('menu-sec-alm').classList.add('hidden');
+        $s('menu-sec-comp').classList.add('hidden');
+        ['btn-alm-deshacer','btn-alm-guardar','btn-alm-exportar'].forEach(id => { const el=$(id); if(el) el.classList.add('hidden'); });
+        const bgl = $('btn-guardar-lote'); if(bgl) bgl.style.display = 'block';
+
+        const scannerEl2 = $('scanner');
+        if (scannerEl2) scannerEl2.style.display = modo === 'alm' ? 'none' : '';
+        const panelDesc = $('panel-desc'); if(panelDesc) panelDesc.style.display = 'none';
+        const pbox = document.querySelector('.progress-box'); if(pbox) pbox.style.display = modo === 'alm' ? 'none' : '';
+
+        if (modo === 'comp') {
+            document.body.className = 'modo-comp';
+            $s('badge-txt').textContent = 'COMPARATIVO';
+            $s('menu-sec-comp').classList.remove('hidden');
+            ['btn-carga','btn-stock'].forEach(id => { const el=$(id); if(el) el.style.display='block'; });
+            $s('vista-comp').classList.remove('hidden');
+            $s('footer-comp').classList.remove('hidden');
+            if (compFileBtns) compFileBtns.style.display = 'flex';
+            const bEsp=$('blq-esp'); if(bEsp) bEsp.style.display='';
+            const bAv=$('blq-avan'); if(bAv) bAv.style.display='';
+            if (scannerEl2) scannerEl2.placeholder = 'ESCANEE CÓDIGO (13 DÍGITOS)';
+            loadStateComp(); renderComp(); focusScanner();
+        } else {
+            document.body.className = 'modo-alm';
+            $s('badge-txt').textContent = 'ALMACÉN';
+            $s('menu-sec-alm').classList.remove('hidden');
+            ['btn-alm-deshacer','btn-alm-guardar','btn-alm-exportar'].forEach(id => { const el=$(id); if(el) el.classList.remove('hidden'); });
+            if(bgl) bgl.style.display = 'none';
+            $s('vista-alm').classList.remove('hidden');
+            loadStateAlm(); renderAlm();
+        }
+    } catch(err) {
+        console.error('seleccionarModo error:', err);
+        alert('Error al abrir módulo: ' + err.message);
     }
 }
 
@@ -862,8 +825,6 @@ function loadStateAlm() {
 // ── MODO RETIRO/INGRESO ──
 function almSetModo(m) {
     almModo = m;
-    document.getElementById('tab-retiro').classList.toggle('activo',  m==='retiro');
-    document.getElementById('tab-ingreso').classList.toggle('activo', m==='ingreso');
 }
 function almSetModoYAbrir(m) {
     almSetModo(m);
@@ -879,11 +840,13 @@ function renderAlm(filtro='') {
     const badge = document.getElementById('alm-estado-badge');
     if (almMap.size === 0) {
         badge.textContent = 'Sin inventario — carga con los botones de arriba';
-        badge.style.color = '#c62828';
+        badge.style.color = '#888';
+        badge.style.fontWeight = 'normal';
     } else {
         const total = [...almMap.values()].reduce((a,v)=>a+v.stock,0);
-        badge.textContent = `${almMap.size.toLocaleString()} códigos | ${total.toLocaleString()} unidades`;
-        badge.style.color = '#D32F2F';
+        badge.innerHTML = `<span style="color:var(--rojo);font-weight:900;">${almMap.size.toLocaleString()} códigos</span> | <span style="color:var(--rojo);font-weight:900;">${total.toLocaleString()} unidades</span>`;
+        badge.style.color = 'var(--texto)';
+        badge.style.fontWeight = 'normal';
     }
 
     let entries = [...almMap.entries()];
@@ -924,18 +887,25 @@ function renderAlm(filtro='') {
         tbody.appendChild(tr);
     }
 
-    // Historial — más reciente primero
+    // Historial movimientos — más reciente primero, con botón eliminar
     const tmov = document.getElementById('t-alm-mov');
     if (tmov) {
         tmov.innerHTML = '';
         const fragM = document.createDocumentFragment();
-        almMovs.slice(-20).reverse().forEach((mv, i) => {
+        almMovs.slice(-30).reverse().forEach((mv, i) => {
+            const realIdx = almMovs.length - 1 - i;
             const tr = document.createElement('tr');
-            const color = mv.tipo==='RETIRO' ? '#B71C1C' : '#1B5E20';
-            tr.innerHTML = `<td>${almMovs.length-i}</td>
-                <td style="font-size:10px;text-align:left;padding:4px;">${mv.cod}</td>
-                <td style="color:${color};font-size:12px;font-weight:bold;">${mv.tipo==='RETIRO'?'−':'+'}</td>
-                <td style="font-weight:bold;">${mv.stockPost}</td>`;
+            tr.style.cursor = 'default';
+            const color = mv.tipo === 'RETIRO' ? '#B71C1C' : '#1B5E20';
+            const signo = mv.tipo === 'RETIRO' ? '−' : '+';
+            tr.innerHTML = `
+                <td style="padding:3px 2px;color:#888;font-size:10px;">${almMovs.length - i}</td>
+                <td style="font-size:9px;text-align:left;padding:3px 2px;word-break:break-all;">${mv.cod}</td>
+                <td style="color:${color};font-size:13px;font-weight:900;text-align:center;">${signo}${mv.cant}</td>
+                <td style="font-weight:bold;font-size:11px;">${mv.stockPost}</td>
+                <td style="padding:2px;">
+                    <button onclick="almEliminarMov(${realIdx})" style="background:none;border:none;color:#666;cursor:pointer;font-size:13px;padding:2px 4px;" title="Eliminar este movimiento">🗑</button>
+                </td>`;
             fragM.appendChild(tr);
         });
         tmov.appendChild(fragM);
@@ -952,12 +922,26 @@ function almRegistrarPorCodigo(cod, desc='', cant=1) {
     if (almModo === 'retiro') {
         if (v.stock <= 0) { showToast('❌ Sin stock para retirar: ' + cod, '#B71C1C'); beepError(); return; }
         v.stock -= cant; if (v.stock < 0) v.stock = 0;
-        almMovs.push({cod, tipo:'RETIRO', cant, stockPost:v.stock});
-        showToast(`− RETIRO: ${v.desc||cod} | Stock: ${v.stock}`, '#111');
+        // Si el último movimiento fue RETIRO del mismo código → acumular
+        const ultimo = almMovs[almMovs.length - 1];
+        if (ultimo && ultimo.cod === cod && ultimo.tipo === 'RETIRO') {
+            ultimo.cant += cant;
+            ultimo.stockPost = v.stock;
+        } else {
+            almMovs.push({cod, tipo:'RETIRO', cant, stockPost:v.stock, ts: Date.now()});
+        }
+        showToast(`− RETIRO ×${cant}: ${v.desc||cod} | Quedan: ${v.stock}`, '#111');
     } else {
         v.stock += cant;
-        almMovs.push({cod, tipo:'INGRESO', cant, stockPost:v.stock});
-        showToast(`+ INGRESO: ${v.desc||cod} | Stock: ${v.stock}`, '#D32F2F');
+        // Si el último movimiento fue INGRESO del mismo código → acumular
+        const ultimo = almMovs[almMovs.length - 1];
+        if (ultimo && ultimo.cod === cod && ultimo.tipo === 'INGRESO') {
+            ultimo.cant += cant;
+            ultimo.stockPost = v.stock;
+        } else {
+            almMovs.push({cod, tipo:'INGRESO', cant, stockPost:v.stock, ts: Date.now()});
+        }
+        showToast(`+ INGRESO ×${cant}: ${v.desc||cod} | Stock: ${v.stock}`, '#D32F2F');
     }
     beepOK(); schedSaveAlm();
     renderAlm(document.getElementById('alm-filtro-rapido')?.value?.trim().toUpperCase()||'');
@@ -969,18 +953,206 @@ function almDeshacer() {
     const v  = almMap.get(mv.cod);
     if (v) { if (mv.tipo==='RETIRO') v.stock+=mv.cant; else v.stock-=mv.cant; if(v.stock<0) v.stock=0; }
     schedSaveAlm(); toggleMenu(); beep(660,0.08);
-    showToast(`↩️ Deshecho: ${mv.tipo} de ${mv.cod}`, '#E65100');
+    showToast(`↩️ Deshecho: ${mv.tipo} ×${mv.cant} de ${mv.cod}`, '#E65100');
+    renderAlm(document.getElementById('alm-filtro-rapido')?.value?.trim().toUpperCase()||'');
+}
+
+function almEliminarMov(idx) {
+    const mv = almMovs[idx];
+    if (!mv) return;
+    const v = almMap.get(mv.cod);
+    if (v) {
+        // Revertir el efecto del movimiento
+        if (mv.tipo === 'RETIRO') v.stock += mv.cant;
+        else { v.stock -= mv.cant; if (v.stock < 0) v.stock = 0; }
+    }
+    almMovs.splice(idx, 1);
+    schedSaveAlm();
+    showToast(`🗑 Movimiento eliminado: ${mv.tipo} ×${mv.cant} de ${mv.cod}`, '#E65100');
+    beep(440, 0.06);
     renderAlm(document.getElementById('alm-filtro-rapido')?.value?.trim().toUpperCase()||'');
 }
 
 function almGuardarSnapshot() {
+    almGuardarYVerInformes();
+}
+function almGuardarYVerInformes() {
     if (!almMap.size) { showToast('⚠️ Sin inventario', '#E65100'); toggleMenu(); return; }
-    const n = prompt('Nombre del guardado:', 'ALMACÉN '+new Date().toLocaleString());
+    const def = 'ALMACÉN_'+new Date().toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'2-digit'}).replace(/\//g,'-')+'_'+(almSnapshots.length+1);
+    const n = prompt('Nombre del informe:', def);
     if (!n) return;
-    almSnapshots.push({nombre:n, fecha:new Date().toLocaleString(), data:Object.fromEntries([...almMap.entries()])});
-    try { localStorage.setItem('p_alm_snaps_v1', JSON.stringify(almSnapshots.slice(-10))); } catch(e) {}
-    toggleMenu(); beep(880,0.1);
+    const snap = {
+        nombre: n,
+        fecha: new Date().toLocaleString(),
+        totalCodigos: almMap.size,
+        totalUnidades: [...almMap.values()].reduce((a,v)=>a+v.stock,0),
+        totalMovimientos: almMovs.length,
+        data: Object.fromEntries([...almMap.entries()]),
+        movs: [...almMovs.slice(-500)]
+    };
+    almSnapshots.push(snap);
+    try { localStorage.setItem('p_alm_snaps_v1', JSON.stringify(almSnapshots.slice(-20))); } catch(e) {}
+    saveAlm(); beep(880,0.1); toggleMenu();
     showToast('✅ Guardado: '+n, '#111');
+    setTimeout(()=>abrirModalAlmInformes(), 400);
+}
+
+function abrirModalAlmInformes() {
+    renderAlmInformes();
+    document.getElementById('modal-alm-informes').style.display = 'flex';
+}
+function cerrarModalAlmInformes() {
+    document.getElementById('modal-alm-informes').style.display = 'none';
+}
+
+function renderAlmInformes() {
+    const cont = document.getElementById('alm-informes-lista');
+    cont.innerHTML = '';
+    if (!almSnapshots.length) {
+        cont.innerHTML = '<p style="color:#888;text-align:center;margin-top:30px;font-family:Barlow,sans-serif;">Sin informes guardados</p>';
+        return;
+    }
+    // Más reciente primero
+    [...almSnapshots].reverse().forEach((snap, ri) => {
+        const i = almSnapshots.length - 1 - ri;
+        const card = document.createElement('div');
+        card.style.cssText = 'background:var(--gris-bg);border-radius:10px;padding:12px 14px;border-left:4px solid var(--rojo);';
+        const btnS = (bg,c,bc) => `background:${bg};color:${c};border:${bc?'1px solid '+bc:'none'};padding:7px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;margin:2px;`;
+        card.innerHTML = `
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;color:var(--rojo);">${snap.nombre}</div>
+            <div style="font-size:11px;color:#888;margin:2px 0 8px;">${snap.fecha} | ${(snap.totalCodigos||0).toLocaleString()} cód. | ${(snap.totalUnidades||0).toLocaleString()} uds. | ${(snap.totalMovimientos||0)} movs.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:2px;">
+                <button onclick="almRestaurarSnap(${i})" style="${btnS('var(--negro)','white','')}">▶ RESTAURAR</button>
+                <button onclick="almExportarSnap(${i})" style="${btnS('#1B5E20','white','')}">📊 EXCEL</button>
+                <button onclick="almEliminarSnap(${i})" style="${btnS('var(--gris-bg)','var(--rojo)','var(--rojo)')}">🗑️</button>
+            </div>`;
+        cont.appendChild(card);
+    });
+}
+
+function renderAlmInformes() {
+    const cont = document.getElementById('alm-informes-lista');
+    cont.innerHTML = '';
+    if (!almSnapshots.length) {
+        cont.innerHTML = '<p style="color:#888;text-align:center;margin-top:30px;font-family:Barlow,sans-serif;">Sin informes guardados</p>';
+        return;
+    }
+    [...almSnapshots].reverse().forEach((snap, ri) => {
+        const i = almSnapshots.length - 1 - ri;
+        const card = document.createElement('div');
+        card.style.cssText = 'background:var(--gris-bg);border-radius:10px;padding:12px 14px;border-left:4px solid var(--rojo);margin-bottom:2px;';
+        const btnS = (bg,c,bc) => `background:${bg};color:${c};border:${bc?'1px solid '+bc:'none'};padding:7px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;margin:2px;`;
+        card.innerHTML = `
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;color:var(--rojo);">${snap.nombre}</div>
+            <div style="font-size:11px;color:#888;margin:2px 0 8px;">${snap.fecha} | ${(snap.totalCodigos||0).toLocaleString()} cód. | ${(snap.totalUnidades||0).toLocaleString()} uds. | ${(snap.totalMovimientos||0)} movs.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:2px;">
+                <button onclick="almVerInforme(${i})" style="${btnS('#1565C0','white','')}">👁 VER</button>
+                <button onclick="almReanudarSnap(${i})" style="${btnS('var(--negro)','white','')}">▶ REANUDAR</button>
+                <button onclick="almExportarSnap(${i})" style="${btnS('#1B5E20','white','')}">📊 EXCEL</button>
+                <button onclick="almEliminarSnap(${i})" style="${btnS('var(--gris-bg)','var(--rojo)','var(--rojo)')}">🗑️</button>
+            </div>
+            <div id="visor-snap-${i}" style="display:none;margin-top:10px;"></div>`;
+        cont.appendChild(card);
+    });
+}
+
+function almVerInforme(idx) {
+    const visor = document.getElementById(`visor-snap-${idx}`);
+    if (!visor) return;
+    if (visor.style.display !== 'none') { visor.style.display = 'none'; return; }
+
+    const snap = almSnapshots[idx];
+    const data = snap.data || {};
+    const entries = Object.entries(data).sort((a,b) => b[1].stock - a[1].stock);
+    const movs = snap.movs || [];
+
+    let html = `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:#aaa;letter-spacing:1px;margin-bottom:6px;text-transform:uppercase;">📦 INVENTARIO (${entries.length} códigos)</div>`;
+    html += `<div style="max-height:200px;overflow-y:auto;border-radius:6px;border:1px solid var(--gris-borde);">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+        <thead><tr style="background:var(--negro);color:white;">
+            <th style="padding:4px 6px;text-align:left;">CÓDIGO</th>
+            <th style="padding:4px 6px;text-align:left;">DESCRIPCIÓN</th>
+            <th style="padding:4px 6px;text-align:right;">STOCK</th>
+        </tr></thead><tbody>`;
+    entries.slice(0, 100).forEach(([c, v]) => {
+        const sc = v.stock === 0 ? '#B71C1C' : v.stock <= 2 ? '#E65100' : '#1B5E20';
+        html += `<tr style="border-bottom:1px solid #eee;">
+            <td style="padding:3px 6px;font-size:10px;word-break:break-all;">${c}</td>
+            <td style="padding:3px 6px;font-size:10px;">${v.desc||''}</td>
+            <td style="padding:3px 6px;text-align:right;font-weight:bold;color:${sc};">${v.stock}</td>
+        </tr>`;
+    });
+    if (entries.length > 100) html += `<tr><td colspan="3" style="padding:6px;text-align:center;color:#999;font-size:10px;">...y ${entries.length-100} más</td></tr>`;
+    html += '</tbody></table></div>';
+
+    if (movs.length) {
+        html += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:#aaa;letter-spacing:1px;margin:10px 0 6px;text-transform:uppercase;">🔄 MOVIMIENTOS (${movs.length})</div>`;
+        html += `<div style="max-height:150px;overflow-y:auto;border-radius:6px;border:1px solid var(--gris-borde);">
+            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+            <thead><tr style="background:var(--negro);color:white;">
+                <th style="padding:4px 6px;">#</th>
+                <th style="padding:4px 6px;text-align:left;">CÓDIGO</th>
+                <th style="padding:4px 6px;">TIPO</th>
+                <th style="padding:4px 6px;">CANT</th>
+                <th style="padding:4px 6px;">STK</th>
+            </tr></thead><tbody>`;
+        [...movs].reverse().slice(0, 50).forEach((mv, i) => {
+            const col = mv.tipo === 'RETIRO' ? '#B71C1C' : '#1B5E20';
+            html += `<tr style="border-bottom:1px solid #eee;">
+                <td style="padding:2px 6px;color:#888;">${movs.length - i}</td>
+                <td style="padding:2px 6px;font-size:10px;">${mv.cod}</td>
+                <td style="padding:2px 6px;color:${col};font-weight:bold;">${mv.tipo === 'RETIRO' ? '−' : '+'}${mv.cant}</td>
+                <td style="padding:2px 6px;text-align:center;">${mv.cant}</td>
+                <td style="padding:2px 6px;text-align:center;">${mv.stockPost}</td>
+            </tr>`;
+        });
+        html += '</tbody></table></div>';
+    }
+    visor.innerHTML = html;
+    visor.style.display = 'block';
+}
+
+function almReanudarSnap(idx) {
+    mostrarConfirm('Reanudar desde informe',
+        '¿Cargar este inventario y continuar desde donde quedaste?\n\nEl inventario y movimientos actuales se reemplazarán.',
+        () => {
+            const snap = almSnapshots[idx];
+            almMap = new Map(Object.entries(snap.data));
+            almMovs = snap.movs ? [...snap.movs] : [];
+            saveAlm();
+            cerrarModalAlmInformes();
+            renderAlm();
+            showToast('▶ Reanudando: ' + snap.nombre, '#111');
+            beep(880, 0.1);
+        }
+    );
+}
+
+function almRestaurarSnap(idx) { almReanudarSnap(idx); }
+
+function almExportarSnap(idx) {
+    const snap = almSnapshots[idx];
+    const data = snap.data || {};
+    const ws1Data = [['CODIGO','DESCRIPCION','STOCK']];
+    Object.entries(data).sort((a,b)=>b[1].stock-a[1].stock).forEach(([c,v])=>ws1Data.push([c,v.desc||'',v.stock]));
+    const ws2Data = [['#','CODIGO','TIPO','CANTIDAD','STOCK_POST']];
+    (snap.movs||[]).forEach((mv,i)=>ws2Data.push([i+1,mv.cod,mv.tipo,mv.cant,mv.stockPost]));
+    const wb = XLSX.utils.book_new();
+    const ws1 = XLSX.utils.aoa_to_sheet(ws1Data); ws1['!cols']=[{wch:18},{wch:55},{wch:12}];
+    const ws2 = XLSX.utils.aoa_to_sheet(ws2Data); ws2['!cols']=[{wch:6},{wch:18},{wch:10},{wch:10},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,ws1,'STOCK');
+    XLSX.utils.book_append_sheet(wb,ws2,'MOVIMIENTOS');
+    XLSX.writeFile(wb, snap.nombre.replace(/[^a-zA-Z0-9_\-]/g,'_')+'.xlsx');
+    showToast('✅ Excel exportado','#111');
+}
+
+function almEliminarSnap(idx) {
+    mostrarConfirm('Eliminar informe','¿Eliminar este informe guardado? No se puede deshacer.', () => {
+        almSnapshots.splice(idx,1);
+        try { localStorage.setItem('p_alm_snaps_v1', JSON.stringify(almSnapshots)); } catch(e) {}
+        renderAlmInformes();
+        showToast('✅ Informe eliminado','#E65100');
+    });
 }
 
 function almExportar() {
@@ -1060,6 +1232,61 @@ document.getElementById('almInput').addEventListener('change', function(e) {
     };
     if (ext==='xlsx'||ext==='xls') reader.readAsArrayBuffer(f); else reader.readAsText(f);
     e.target.value='';
+});
+
+
+// ── AGREGAR MÁS (múltiples archivos, siempre MERGE) ──
+document.getElementById('almInputMas').addEventListener('change', function(e) {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    if (!almMap.size) { showToast('⚠️ Primero carga un inventario base con CARGAR INV.','#E65100'); return; }
+    showLoading(`Procesando ${files.length} archivo(s)...`);
+    let totalNuevos = 0;
+    let procesados = 0;
+
+    function procesarArchivo(f) {
+        return new Promise((resolve) => {
+            const ext = f.name.split('.').pop().toLowerCase();
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    let rows;
+                    if (ext==='xlsx'||ext==='xls') {
+                        const wb = XLSX.read(new Uint8Array(evt.target.result),{type:'array'});
+                        rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+                    } else {
+                        const f2 = parsearCSV(evt.target.result);
+                        const h  = f2[0] ? f2[0].map(x=>x.trim().toUpperCase()) : [];
+                        rows = f2.slice(1).map(r=>{const o={};h.forEach((hh,i)=>o[hh]=r[i]||'');return o;});
+                    }
+                    let cnt = 0;
+                    rows.forEach(row => {
+                        const cod   = String(row['CODIGO 13 DIGITOS']||row['CÓDIGO ÚNICO']||row['CODIGO']||row['COD']||Object.values(row)[0]||'').trim().toUpperCase();
+                        const desc  = String(row['DESCRIPCION']||row['DESCRIPCIÓN']||row['DESC']||Object.values(row)[1]||'').trim();
+                        const stock = parseInt(row['TOTAL']||row['STOCK']||row['CANTIDAD']||Object.values(row)[2]||0)||0;
+                        if (cod && cod.length >= 4 && cod !== 'CODIGO 13 DIGITOS') {
+                            if (almMap.has(cod)) {
+                                almMap.get(cod).stock += stock; // SUMA automática
+                            } else {
+                                almMap.set(cod, {desc, stock});
+                            }
+                            cnt++;
+                        }
+                    });
+                    resolve(cnt);
+                } catch(err) { resolve(0); }
+            };
+            if (ext==='xlsx'||ext==='xls') reader.readAsArrayBuffer(f); else reader.readAsText(f);
+        });
+    }
+
+    Promise.all(files.map(f => procesarArchivo(f))).then(counts => {
+        totalNuevos = counts.reduce((a,b)=>a+b, 0);
+        saveAlm(); hideLoading(); beep(880, 0.1);
+        showToast(`✅ ${files.length} archivo(s) | ${totalNuevos.toLocaleString()} filas | Total: ${almMap.size.toLocaleString()} códigos`, '#111');
+        renderAlm();
+    });
+    e.target.value = '';
 });
 
 function aplicarCargaAlm(nuevos, modo) {
@@ -1200,14 +1427,14 @@ function ejecutarBusqueda() {
 //  MODAL RETIRO / INGRESO
 // ══════════════════════════════════════════════════════
 function abrirModalMovimiento(codPresel=null) {
-    const esRetiro  = almModo === 'retiro';
+    almModo = 'retiro'; // Siempre retiro
     const header    = document.getElementById('mov-header-bar');
     const title     = document.getElementById('mov-modal-title');
     const btnAp     = document.getElementById('mov-btn-aplicar');
-    header.className = 'mov-header ' + (esRetiro ? 'retiro' : 'ingreso');
-    title.textContent = esRetiro ? '− RETIRAR STOCK' : '+ INGRESAR STOCK';
-    btnAp.className   = 'mov-btn-aplicar ' + (esRetiro ? 'retiro' : 'ingreso');
-    btnAp.textContent = esRetiro ? 'APLICAR RETIRO' : 'APLICAR INGRESO';
+    header.className = 'mov-header retiro';
+    title.textContent = '− RETIRAR STOCK';
+    btnAp.className   = 'mov-btn-aplicar retiro';
+    btnAp.textContent = 'APLICAR RETIRO';
 
     if (codPresel) {
         document.getElementById('mov-manual-cod').value  = codPresel;
@@ -1366,7 +1593,16 @@ function renderComp(ultimoCod=null) {
     document.getElementById('bar-fill').style.width  = p+'%';
 
     const frag1=document.createDocumentFragment();
-    historial.slice(-30).reverse().forEach((c,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${historial.length-i}</td><td>${c}</td>`; frag1.appendChild(tr); });
+    historial.slice(-30).reverse().forEach((c,i)=>{
+        const realIdx = historial.length - 1 - i;
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td style="color:#888;padding:2px 3px;">${historial.length-i}</td>
+            <td style="font-size:11px;text-align:left;padding:2px 3px;word-break:break-all;">${c}</td>
+            <td style="padding:2px 1px;">
+                <button onclick="eliminarLectura(${realIdx})" style="background:none;border:none;color:#555;cursor:pointer;font-size:13px;padding:1px 4px;" title="Eliminar esta lectura">🗑</button>
+            </td>`;
+        frag1.appendChild(tr);
+    });
     const tL=document.getElementById('t-lectura'); tL.innerHTML=''; tL.appendChild(frag1);
 
     const frag2=document.createDocumentFragment(); let count=0;
@@ -1386,6 +1622,22 @@ function crearFilaComp(k,v,resaltar=false) {
     tr.innerHTML=`<td style="font-size:10px;font-weight:bold;word-break:break-all;">${k}</td><td>${v.exp}</td><td style="font-weight:bold;">${v.real}</td>`;
     tr.addEventListener('click', ()=>mostrarDesc(k));
     return tr;
+}
+
+function eliminarLectura(idx) {
+    const cod = historial[idx];
+    if (!cod) return;
+    historial.splice(idx, 1);
+    // Revertir en maestroMap
+    if (maestroMap.has(cod)) {
+        const v = maestroMap.get(cod);
+        v.real = Math.max(0, v.real - 1);
+        if (v.real === 0 && v.exp === 0) maestroMap.delete(cod);
+    }
+    syncConteo();
+    renderComp();
+    beep(440, 0.06);
+    showToast(`🗑 Lectura eliminada: ${cod}`, '#E65100');
 }
 
 function mostrarDesc(cod) {
@@ -1412,15 +1664,20 @@ function guardarLote() {
 // ── RESETEAR ──
 function resetearModulo() {
     const mod={comp:'COMPARATIVO',alm:'ALMACÉN'}[modoActual]||'módulo';
-    mostrarConfirm(`Resetear ${mod}`,`¿Borrar todos los datos de ${mod}?`, () => {
+    const msg = modoActual==='alm'
+        ? '¿Borrar inventario y movimientos de ALMACÉN?\n\n(Los informes guardados NO se borran)'
+        : `¿Borrar todos los datos de ${mod}?`;
+    mostrarConfirm(`Reiniciar ${mod}`, msg, () => {
         if (modoActual==='comp') {
             ['p_maestro_v8','p_hist_v8','p_total_v8','p_desc_v8'].forEach(k=>localStorage.removeItem(k));
             maestroMap=new Map(); descripcionMap=new Map(); historial=[]; totalEsp=0; renderComp();
         } else {
-            ['p_alm_v1','p_alm_movs_v1','p_alm_snaps_v1'].forEach(k=>localStorage.removeItem(k));
-            almMap=new Map(); almMovs=[]; almSnapshots=[]; renderAlm();
+            // Solo borra inventario y movimientos — informes/snapshots se conservan
+            localStorage.removeItem('p_alm_v1');
+            localStorage.removeItem('p_alm_movs_v1');
+            almMap=new Map(); almMovs=[]; renderAlm();
         }
-        toggleMenu(); showToast(`✅ ${mod} reseteado`,'#E65100');
+        toggleMenu(); showToast(`✅ ${mod} reiniciado`,'#E65100');
     });
 }
 
@@ -1513,166 +1770,133 @@ document.addEventListener('click', (e) => {
     if (!bloqueado&&modoActual&&modoActual!=='alm'&&tag!=='BUTTON'&&tag!=='INPUT'&&tag!=='SELECT') focusScanner();
 });
 
-// ══════════════════════════════════════════════════════
-//  CÁMARA — SCANNER CONTINUO CON ZXING
-// ══════════════════════════════════════════════════════
-let camStream     = null;
-let camReader     = null;
-let camCodDetectado = '';
-let camActivo     = false;
-
-function abrirCamara() {
-    cerrarModalMovimiento();
-    const modal = document.getElementById('modal-camara');
-    modal.style.display = 'flex';
-    camCodDetectado = '';
-
-    // Resetear UI
-    document.getElementById('cam-result-cod').textContent  = '— EN ESPERA —';
-    document.getElementById('cam-result-cod').style.color  = '#444';
-    document.getElementById('cam-result-desc').textContent = 'Apunta la cámara a un código de barras';
-    document.getElementById('cam-result-box').style.borderLeftColor = '#333';
-    document.getElementById('cam-manual-input').value = '';
-    const btnA = document.getElementById('cam-btn-aplicar');
-    btnA.disabled = true; btnA.style.background='#333'; btnA.style.color='#666'; btnA.style.cursor='not-allowed';
-    document.getElementById('cam-status-overlay').textContent = 'Iniciando cámara...';
-
-    iniciarScannerZXing();
-}
-
-function iniciarScannerZXing() {
-    if (camActivo) return;
-    camActivo = true;
-
-    // Verificar si ZXing está disponible
-    if (typeof ZXing === 'undefined') {
-        document.getElementById('cam-status-overlay').textContent = '⚠️ Librería no cargada. Usa entrada manual.';
-        camActivo = false;
-        return;
-    }
-
-    try {
-        const hints = new Map();
-        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-            ZXing.BarcodeFormat.EAN_13,
-            ZXing.BarcodeFormat.EAN_8,
-            ZXing.BarcodeFormat.CODE_128,
-            ZXing.BarcodeFormat.CODE_39,
-            ZXing.BarcodeFormat.UPC_A,
-            ZXing.BarcodeFormat.UPC_E,
-        ]);
-        hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-
-        camReader = new ZXing.BrowserMultiFormatReader(hints);
-
-        camReader.listVideoInputDevices().then(devices => {
-            if (!devices || devices.length === 0) {
-                document.getElementById('cam-status-overlay').textContent = '⚠️ No se encontró cámara. Usa entrada manual.';
-                camActivo = false;
-                return;
-            }
-
-            // Preferir cámara trasera
-            let deviceId = devices[0].deviceId;
-            const trasera = devices.find(d => /back|rear|environment|trasera/i.test(d.label));
-            if (trasera) deviceId = trasera.deviceId;
-
-            document.getElementById('cam-status-overlay').textContent = '🔍 Buscando código...';
-
-            camReader.decodeFromVideoDevice(deviceId, 'cam-video', (result, err) => {
-                if (result) {
-                    const cod = result.getText().trim().toUpperCase();
-                    usarCodigoDetectado(cod);
-                }
-                // Ignorar errores de "no encontrado" que son continuos
-            });
-        }).catch(err => {
-            document.getElementById('cam-status-overlay').textContent = '⚠️ Permiso de cámara denegado. Usa entrada manual.';
-            camActivo = false;
-        });
-
-    } catch(err) {
-        document.getElementById('cam-status-overlay').textContent = '⚠️ Error al iniciar cámara: ' + err.message;
-        camActivo = false;
-    }
-}
-
-function usarCodigoDetectado(cod) {
-    if (!camActivo) return;
-    // Evitar lecturas duplicadas rápidas
-    if (cod === camCodDetectado) return;
-
-    camCodDetectado = cod;
-    beepOK();
-
-    document.getElementById('cam-result-cod').textContent  = cod;
-    document.getElementById('cam-result-cod').style.color  = 'var(--rojo-light)';
-    document.getElementById('cam-result-box').style.borderLeftColor = 'var(--rojo)';
-    document.getElementById('cam-manual-input').value = cod;
-    document.getElementById('cam-status-overlay').textContent = '✅ ¡Código detectado! Presiona USAR';
-
-    const prod = almMap.get(cod);
-    document.getElementById('cam-result-desc').textContent = prod
-        ? `Stock actual: ${prod.stock} | ${prod.desc||'sin descripción'}`
-        : '⚠️ No está en inventario — igual se puede aplicar';
-
-    const btnA = document.getElementById('cam-btn-aplicar');
-    btnA.disabled = false;
-    btnA.style.background = 'var(--rojo)';
-    btnA.style.color = 'white';
-    btnA.style.cursor = 'pointer';
-}
-
-function cerrarCamara() {
-    camActivo = false;
-    if (camReader) {
-        try { camReader.reset(); } catch(e) {}
-        camReader = null;
-    }
-    if (camStream) {
-        try { camStream.getTracks().forEach(t => t.stop()); } catch(e) {}
-        camStream = null;
-    }
-    const video = document.getElementById('cam-video');
-    if (video) { video.srcObject = null; }
-    document.getElementById('modal-camara').style.display = 'none';
-    camCodDetectado = '';
-}
-
-function onCamManualInput(val) {
-    const cod = val.trim().toUpperCase();
-    camCodDetectado = cod;
-    const btnA = document.getElementById('cam-btn-aplicar');
-    if (cod.length >= 4) {
-        btnA.disabled = false;
-        btnA.style.background = 'var(--rojo)';
-        btnA.style.color = 'white';
-        btnA.style.cursor = 'pointer';
-        const prod = almMap.get(cod);
-        document.getElementById('cam-result-cod').textContent  = cod;
-        document.getElementById('cam-result-cod').style.color  = 'var(--rojo-light)';
-        document.getElementById('cam-result-desc').textContent = prod
-            ? `Stock: ${prod.stock} | ${prod.desc||'sin desc.'}`
-            : '⚠️ No encontrado en inventario';
-    } else {
-        btnA.disabled = true;
-        btnA.style.background = '#333';
-        btnA.style.color = '#666';
-        btnA.style.cursor = 'not-allowed';
-    }
-}
-
-function aplicarCodigoCamara() {
-    const cod = (camCodDetectado||document.getElementById('cam-manual-input').value).trim().toUpperCase();
-    if (!cod || cod.length < 4) { showToast('⚠️ Código muy corto', '#E65100'); return; }
-    cerrarCamara();
-    abrirModalMovimiento(cod);
-}
-
-// Función legacy - no usada pero evita errores
-function tomarFoto() {}
-
 window.addEventListener('beforeunload', ()=>{ clearTimeout(saveTimer); clearTimeout(almSaveTimer); if(modoActual==='comp') saveComp(); if(modoActual==='alm') saveAlm(); });
+</script>
+
+<!-- ══════ MODAL INFORMES ALMACÉN ══════ -->
+<div id="modal-alm-informes" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:6500;justify-content:center;align-items:flex-start;padding:16px;">
+    <div style="background:var(--blanco);border-radius:14px;width:100%;max-width:480px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;margin-top:20px;">
+        <div style="background:var(--negro);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--rojo);flex-shrink:0;">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;color:white;letter-spacing:1px;">📋 INFORMES ALMACÉN</span>
+            <button onclick="cerrarModalAlmInformes()" style="background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;">✕</button>
+        </div>
+        <div id="alm-informes-lista" style="flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:8px;">
+            <p style="color:#888;text-align:center;margin-top:30px;font-family:'Barlow',sans-serif;">Sin informes guardados</p>
+        </div>
+    </div>
+</div>
+<!-- ══════ PWA INSTALL BANNER ══════ -->
+<div id="pwa-banner">
+    <div class="pwa-banner-icon">📦</div>
+    <div class="pwa-banner-txt">
+        <strong>INSTALAR PIEERS PRO</strong>
+        <span>Instala la app en tu celular para usarla sin internet</span>
+    </div>
+    <button class="pwa-banner-btn pwa-install-btn" onclick="pwaInstalar()">INSTALAR</button>
+    <button class="pwa-banner-btn pwa-dismiss-btn" onclick="pwaDismiss()">✕</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  PWA — INSTALACIÓN COMO APP
+// ══════════════════════════════════════════════════════
+
+// 1. Generar manifiesto dinámico con ícono canvas (sin SVG que rompe el HTML parser)
+(function() {
+    try {
+        // Generar ícono via Canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        // Fondo negro redondeado
+        ctx.fillStyle = '#0a0a0a';
+        ctx.beginPath(); ctx.roundRect(0,0,512,512,80); ctx.fill();
+        // Barra roja
+        ctx.fillStyle = '#D32F2F';
+        ctx.fillRect(80, 310, 352, 10);
+        // Texto PIEERS
+        ctx.fillStyle = '#D32F2F';
+        ctx.font = 'bold 90px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('PIEERS', 256, 200);
+        // Texto PRO
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 70px Arial';
+        ctx.fillText('PRO', 256, 290);
+        // Texto AUDITOR
+        ctx.fillStyle = '#555';
+        ctx.font = '35px Arial';
+        ctx.fillText('AUDITOR', 256, 390);
+        const iconData = canvas.toDataURL('image/png');
+
+        const manifest = {
+            name: 'PIEERS PRO',
+            short_name: 'PIEERS',
+            description: 'Auditoría y gestión de almacén',
+            start_url: './',
+            display: 'standalone',
+            background_color: '#0a0a0a',
+            theme_color: '#0a0a0a',
+            orientation: 'portrait',
+            icons: [
+                { src: iconData, sizes: '192x192', type: 'image/png' },
+                { src: iconData, sizes: '512x512', type: 'image/png' }
+            ]
+        };
+        const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+        document.getElementById('pwa-manifest').href = URL.createObjectURL(blob);
+    } catch(e) { console.warn('PWA manifest:', e); }
+})();
+
+// 2. Service Worker — solo funciona desde https:// con archivo real, no desde blob
+// Se omite el registro inline para evitar errores de consola que bloquean el app
+
+// 3. Capturar evento de instalación
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!localStorage.getItem('pwa_dismissed')) {
+        const banner = document.getElementById('pwa-banner');
+        if (banner) banner.classList.add('visible');
+    }
+    const btn = document.getElementById('btn-instalar-app');
+    if (btn) btn.style.display = 'flex';
+});
+
+window.addEventListener('appinstalled', () => {
+    const banner = document.getElementById('pwa-banner');
+    if (banner) banner.classList.remove('visible');
+    deferredPrompt = null;
+    if (typeof showToast === 'function') showToast('✅ PIEERS PRO instalada', '#1B5E20');
+});
+
+function pwaInstalar() {
+    if (!deferredPrompt) { mostrarInstruccionesInstalacion(); return; }
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(choice => {
+        if (choice.outcome === 'accepted' && typeof showToast === 'function')
+            showToast('✅ Instalando PIEERS PRO...', '#111');
+        deferredPrompt = null;
+        const banner = document.getElementById('pwa-banner');
+        if (banner) banner.classList.remove('visible');
+    });
+}
+
+function pwaDismiss() {
+    const banner = document.getElementById('pwa-banner');
+    if (banner) banner.classList.remove('visible');
+    localStorage.setItem('pwa_dismissed', '1');
+}
+
+function mostrarInstruccionesInstalacion() {
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    let msg = isIOS
+        ? 'iOS: Toca el boton Compartir y luego "Agregar a pantalla de inicio"'
+        : 'Chrome/Android: Menu (tres puntos) y luego "Agregar a pantalla de inicio"\n\nO busca el icono de instalacion en la barra de direcciones';
+    alert('INSTALAR PIEERS PRO\n\n' + msg);
+}
+
 </script>
 </body>
 </html>
