@@ -155,7 +155,7 @@
         .header-user span { color:white; font-weight:600; }
 
         /* ── PANEL USUARIOS CONECTADOS ── */
-        #panel-online { display:none; position:fixed; top:48px; left:0; right:0; background:#0a1a0a; border-bottom:2px solid #1a3a1a; padding:6px 12px; z-index:200; flex-wrap:wrap; gap:6px; align-items:center; }
+        #panel-online { display:none; flex-wrap:wrap; gap:5px; align-items:center; padding:4px 10px; background:#0a1a0a; border-bottom:1px solid #1a3a1a; flex-shrink:0; }
         #panel-online.visible { display:flex; }
         .online-chip { background:#111; border:1px solid #1a3a1a; border-radius:20px; padding:4px 10px; font-size:11px; color:#4CAF50; font-family:'Barlow',sans-serif; display:flex; align-items:center; gap:5px; }
         .online-chip::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:#4CAF50; animation:pulse-dot 2s infinite; }
@@ -399,8 +399,6 @@
 </div>
 
 <!-- ══════ PANEL USUARIOS EN LÍNEA ══════ -->
-<div id="panel-online"></div>
-
 <!-- ══════ APP PRINCIPAL ══════ -->
 <div id="app-principal" class="hidden" style="flex-direction:column;height:100vh;">
 
@@ -429,6 +427,7 @@
             <button onclick="resetearApp();toggleMenu();" class="menu-btn-danger">⚠️ Borrar todo y reiniciar</button>
         </div>
     </div>
+    <div id="panel-online"></div>
 
     <input type="file" id="fileInput"      class="hidden" accept=".xlsx,.xls,.txt,.csv">
     <input type="file" id="stockInput"     class="hidden" accept=".csv,.xlsx,.xls">
@@ -705,6 +704,12 @@ function mostrarConfirm(titulo, msg, cb) {
     document.getElementById('confirm-title').textContent = titulo;
     document.getElementById('confirm-msg').textContent   = msg;
     confirmCallback = cb;
+    // Ocultar botón reemplazar si quedó de uso anterior
+    const btnR = document.getElementById('btn-confirm-replace');
+    if (btnR) btnR.style.display = 'none';
+    // Restaurar texto del botón principal
+    const btnY = document.getElementById('btn-confirm-yes');
+    if (btnY) { btnY.textContent = 'SÍ, CONFIRMAR'; btnY.onclick = null; }
     document.getElementById('modal-confirm').style.display = 'flex';
 }
 function cerrarConfirm() {
@@ -2185,6 +2190,8 @@ async function loginOk() {
 // ── INICIAR SESIÓN EN NUBE ──
 async function iniciarSesionNube(u) {
     try {
+        // Marcar sesiones anteriores de este usuario como inactivas
+        await sbPatch('sesiones', `usuario_id=eq.${u.id}&activo=eq.true`, { activo: false });
         const rows = await sbPost('sesiones', {
             usuario_id: u.id,
             usuario_nombre: u.nombre,
@@ -2244,12 +2251,18 @@ async function mostrarConectadosLogin() {
 function iniciarSyncOnline() {
     actualizarPanelOnline();
     clearInterval(syncTimer);
-    syncTimer = setInterval(actualizarPanelOnline, 15000);
+    // Cada 30s: heartbeat (actualiza updated_at) + refresca panel
+    syncTimer = setInterval(async () => {
+        if (sesionId) {
+            try { await sbPatch('sesiones', `id=eq.${sesionId}`, { updated_at: new Date().toISOString(), activo: true }); } catch(e) {}
+        }
+        actualizarPanelOnline();
+    }, 30000);
 }
 
 async function actualizarPanelOnline() {
     try {
-        const cutoff = new Date(Date.now() - 5*60*1000).toISOString(); // 5 min
+        const cutoff = new Date(Date.now() - 2*60*1000).toISOString(); // 2 min
         const activos = await sbGet('sesiones', `activo=eq.true&updated_at=gte.${cutoff}&order=updated_at.desc`);
         const panel = document.getElementById('panel-online');
         if (!activos || activos.length <= 1) { if(panel) panel.classList.remove('visible'); return; }
