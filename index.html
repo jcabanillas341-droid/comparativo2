@@ -707,18 +707,48 @@ function mostrarConfirm(titulo, msg, cb) {
     // Ocultar botón reemplazar si quedó de uso anterior
     const btnR = document.getElementById('btn-confirm-replace');
     if (btnR) btnR.style.display = 'none';
-    // Restaurar texto del botón principal
+    // Restaurar botón principal limpio — solo onclick, nunca addEventListener
     const btnY = document.getElementById('btn-confirm-yes');
-    if (btnY) { btnY.textContent = 'SÍ, CONFIRMAR'; btnY.onclick = null; }
+    if (btnY) {
+        btnY.textContent = 'SÍ, CONFIRMAR';
+        btnY.onclick = () => { cerrarConfirm(); if (confirmCallback) confirmCallback(); };
+    }
     document.getElementById('modal-confirm').style.display = 'flex';
 }
 function cerrarConfirm() {
     document.getElementById('modal-confirm').style.display = 'none';
     confirmCallback = null;
 }
-document.getElementById('btn-confirm-yes').addEventListener('click', () => {
-    cerrarConfirm(); if (confirmCallback) confirmCallback();
-});
+// NOTA: NO usar addEventListener en btn-confirm-yes — solo onclick asignado en mostrarConfirm
+
+// Helper para confirmación con DOS opciones (ej: AGREGAR vs REEMPLAZAR)
+function mostrarConfirmDoble(titulo, msg, labelA, cbA, labelB, cbB) {
+    // Reusar el modal pero con dos botones de acción
+    document.getElementById('confirm-title').textContent = titulo;
+    document.getElementById('confirm-msg').textContent   = msg;
+    confirmCallback = null;
+
+    const btnY = document.getElementById('btn-confirm-yes');
+    if (btnY) {
+        btnY.textContent = labelA;
+        btnY.onclick = () => { cerrarConfirm(); if (cbA) cbA(); };
+    }
+
+    // Crear o reusar el botón secundario
+    let btnR = document.getElementById('btn-confirm-replace');
+    if (!btnR) {
+        btnR = document.createElement('button');
+        btnR.id = 'btn-confirm-replace';
+        btnR.className = 'btn-confirm-no';
+        btnR.style.cssText = 'flex:1;padding:13px;border:2px solid var(--rojo);border-radius:8px;background:var(--gris-bg);color:var(--rojo);font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;';
+        document.querySelector('.confirm-btns').appendChild(btnR);
+    }
+    btnR.textContent = labelB;
+    btnR.style.display = '';
+    btnR.onclick = () => { cerrarConfirm(); if (cbB) cbB(); };
+
+    document.getElementById('modal-confirm').style.display = 'flex';
+}
 
 // ── AUDIO ──
 let audioCtx = null;
@@ -1363,29 +1393,12 @@ document.getElementById('almInput').addEventListener('change', function(e) {
 
                 // Si ya hay inventario → preguntar REEMPLAZAR o AGREGAR
                 if (almMap.size > 0) {
-                    mostrarConfirm(
+                    mostrarConfirmDoble(
                         '¿Cómo cargar?',
-                        `Ya tienes ${almMap.size.toLocaleString()} productos.\n\n• AGREGAR: suma los nuevos al inventario existente (si el código ya existe, SUMA el stock).\n• REEMPLAZAR: borra todo y carga solo el archivo nuevo.`,
-                        null
+                        `Ya tienes ${almMap.size.toLocaleString()} productos.\n\n• AGREGAR: suma los nuevos (códigos iguales suman stock).\n• REEMPLAZAR: borra todo y carga solo este archivo.`,
+                        '➕ AGREGAR',   () => aplicarCargaAlm(nuevos, 'merge'),
+                        '🗑️ REEMPLAZAR', () => aplicarCargaAlm(nuevos, 'replace')
                     );
-                    // Cambiar botones del confirm
-                    document.getElementById('btn-confirm-yes').textContent = '➕ AGREGAR';
-                    document.getElementById('btn-confirm-yes').onclick = () => {
-                        cerrarConfirm();
-                        aplicarCargaAlm(nuevos, 'merge');
-                    };
-                    // Añadir botón reemplazar
-                    let btnR = document.getElementById('btn-confirm-replace');
-                    if (!btnR) {
-                        btnR = document.createElement('button');
-                        btnR.id = 'btn-confirm-replace';
-                        btnR.className = 'btn-confirm-no';
-                        btnR.style.cssText = 'flex:1;padding:13px;border:2px solid var(--rojo);border-radius:8px;background:var(--gris-bg);color:var(--rojo);font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
-                        btnR.textContent = '🗑️ REEMPLAZAR';
-                        document.querySelector('.confirm-btns').appendChild(btnR);
-                    }
-                    btnR.style.display = '';
-                    btnR.onclick = () => { cerrarConfirm(); aplicarCargaAlm(nuevos, 'replace'); };
                 } else {
                     aplicarCargaAlm(nuevos, 'replace');
                 }
@@ -1473,9 +1486,7 @@ function aplicarCargaAlm(nuevos, modo) {
         saveAlm(); hideLoading();
         showToast(`✅ ${nuevos.length.toLocaleString()} productos ${accion} | Total: ${almMap.size.toLocaleString()}`, '#111');
         beep(880,0.1); renderAlm();
-        // Ocultar botón reemplazar del confirm por si acaso
-        const btnR = document.getElementById('btn-confirm-replace');
-        if (btnR) btnR.style.display = 'none';
+
     }, 30);
 }
 
@@ -1496,24 +1507,12 @@ document.getElementById('almStockInput').addEventListener('change', function(e) 
                 hideLoading();
 
                 if (almMap.size > 0) {
-                    mostrarConfirm(
+                    mostrarConfirmDoble(
                         '¿Cómo cargar stock?',
                         `Ya tienes ${almMap.size.toLocaleString()} productos.\n\n• AGREGAR: suma el nuevo stock al existente.\n• REEMPLAZAR: borra todo y carga solo este archivo.`,
-                        null
+                        '➕ AGREGAR',   () => aplicarCargaAlm(nuevos, 'merge'),
+                        '🗑️ REEMPLAZAR', () => aplicarCargaAlm(nuevos, 'replace')
                     );
-                    document.getElementById('btn-confirm-yes').textContent = '➕ AGREGAR';
-                    document.getElementById('btn-confirm-yes').onclick = () => { cerrarConfirm(); aplicarCargaAlm(nuevos,'merge'); };
-                    let btnR = document.getElementById('btn-confirm-replace');
-                    if (!btnR) {
-                        btnR = document.createElement('button');
-                        btnR.id = 'btn-confirm-replace';
-                        btnR.className = 'btn-confirm-no';
-                        btnR.style.cssText = 'flex:1;padding:13px;border:2px solid var(--rojo);border-radius:8px;background:var(--gris-bg);color:var(--rojo);font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
-                        btnR.textContent = '🗑️ REEMPLAZAR';
-                        document.querySelector('.confirm-btns').appendChild(btnR);
-                    }
-                    btnR.style.display = '';
-                    btnR.onclick = () => { cerrarConfirm(); aplicarCargaAlm(nuevos,'replace'); };
                 } else {
                     aplicarCargaAlm(nuevos, 'replace');
                 }
