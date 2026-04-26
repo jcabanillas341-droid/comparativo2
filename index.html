@@ -299,7 +299,7 @@
         .scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
 
         /* ── MODAL CONFIRMACIÓN ── */
-        #modal-confirm { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 6000; padding: 24px; flex-direction: column; justify-content: center; align-items: center; gap: 16px; }
+        #modal-confirm { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; padding: 24px; flex-direction: column; justify-content: center; align-items: center; gap: 16px; }
         .confirm-card { background: var(--blanco); border-radius: 14px; padding: 24px; width: 100%; max-width: 340px; border: 2px solid var(--gris-borde); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
         .confirm-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; color: var(--rojo); text-align: center; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         .confirm-msg { font-size: 13px; color: #555; text-align: center; line-height: 1.5; margin-bottom: 16px; }
@@ -1197,30 +1197,7 @@ function cerrarModalAlmInformes() {
     document.getElementById('modal-alm-informes').style.display = 'none';
 }
 
-function renderAlmInformes() {
-    const cont = document.getElementById('alm-informes-lista');
-    cont.innerHTML = '';
-    if (!almSnapshots.length) {
-        cont.innerHTML = '<p style="color:#888;text-align:center;margin-top:30px;font-family:Barlow,sans-serif;">Sin informes guardados</p>';
-        return;
-    }
-    // Más reciente primero
-    [...almSnapshots].reverse().forEach((snap, ri) => {
-        const i = almSnapshots.length - 1 - ri;
-        const card = document.createElement('div');
-        card.style.cssText = 'background:var(--gris-bg);border-radius:10px;padding:12px 14px;border-left:4px solid var(--rojo);';
-        const btnS = (bg,c,bc) => `background:${bg};color:${c};border:${bc?'1px solid '+bc:'none'};padding:7px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;margin:2px;`;
-        card.innerHTML = `
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;color:var(--rojo);">${snap.nombre}</div>
-            <div style="font-size:11px;color:#888;margin:2px 0 8px;">${snap.fecha} | ${(snap.totalCodigos||0).toLocaleString()} cód. | ${(snap.totalUnidades||0).toLocaleString()} uds. | ${(snap.totalMovimientos||0)} movs.</div>
-            <div style="display:flex;flex-wrap:wrap;gap:2px;">
-                <button onclick="almRestaurarSnap(${i})" style="${btnS('var(--negro)','white','')}">▶ RESTAURAR</button>
-                <button onclick="almExportarSnap(${i})" style="${btnS('#1B5E20','white','')}">📊 EXCEL</button>
-                <button onclick="almEliminarSnap(${i})" style="${btnS('var(--gris-bg)','var(--rojo)','var(--rojo)')}">🗑️</button>
-            </div>`;
-        cont.appendChild(card);
-    });
-}
+
 
 function renderAlmInformes() {
     const cont = document.getElementById('alm-informes-lista');
@@ -1232,21 +1209,53 @@ function renderAlmInformes() {
     [...almSnapshots].reverse().forEach((snap, ri) => {
         const i = almSnapshots.length - 1 - ri;
         const card = document.createElement('div');
-        card.style.cssText = 'background:var(--gris-bg);border-radius:10px;padding:12px 14px;border-left:4px solid var(--rojo);margin-bottom:2px;';
-        const btnS = (bg,c,bc) => `background:${bg};color:${c};border:${bc?'1px solid '+bc:'none'};padding:7px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;margin:2px;`;
-        card.innerHTML = `
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;color:var(--rojo);">${snap.nombre}</div>
-            <div style="font-size:11px;color:#888;margin:2px 0 8px;">${snap.fecha} | ${(snap.totalCodigos||0).toLocaleString()} cód. | ${(snap.totalUnidades||0).toLocaleString()} uds. | ${(snap.totalMovimientos||0)} movs.</div>
-            <div style="display:flex;flex-wrap:wrap;gap:2px;">
-                <button onclick="almVerInforme(${i})" style="${btnS('#1565C0','white','')}">👁 VER</button>
-                <button onclick="almReanudarSnap(${i})" style="${btnS('var(--negro)','white','')}">▶ REANUDAR</button>
-                <button onclick="almExportarSnap(${i})" style="${btnS('#1B5E20','white','')}">📊 EXCEL</button>
-                <button onclick="almEliminarSnap(${i})" style="${btnS('var(--gris-bg)','var(--rojo)','var(--rojo)')}">🗑️</button>
-            </div>
-            <div id="visor-snap-${i}" style="display:none;margin-top:10px;"></div>`;
+        card.style.cssText = 'background:var(--gris-bg);border-radius:10px;padding:12px 14px;border-left:4px solid var(--rojo);margin-bottom:6px;';
+
+        // Header info
+        const info = document.createElement('div');
+        info.innerHTML = '<div style="font-family:Arial,sans-serif;font-size:15px;font-weight:900;color:var(--rojo);margin-bottom:2px;">' + snap.nombre + '</div>'
+            + '<div style="font-size:11px;color:#888;margin-bottom:8px;">' + snap.fecha + ' | ' + (snap.totalCodigos||0).toLocaleString() + ' cod. | ' + (snap.totalUnidades||0).toLocaleString() + ' uds.</div>';
+        card.appendChild(info);
+
+        // Buttons row
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;';
+
+        const mkBtn = (label, bg, color) => {
+            const b = document.createElement('button');
+            b.textContent = label;
+            b.style.cssText = 'padding:8px 12px;border:none;border-radius:6px;background:' + bg + ';color:' + color + ';font-family:Arial,sans-serif;font-size:12px;font-weight:700;cursor:pointer;';
+            return b;
+        };
+
+        const btnVer  = mkBtn('👁 VER',      '#1565C0', 'white');
+        const btnRean = mkBtn('▶ REANUDAR',  '#111111', 'white');
+        const btnXls  = mkBtn('📊 EXCEL',    '#1B5E20', 'white');
+        const btnDel  = mkBtn('🗑️ BORRAR',   '#1a0000', '#E57373');
+        btnDel.style.border = '1px solid #c62828';
+
+        btnVer.addEventListener('click',  () => almVerInforme(i));
+        btnRean.addEventListener('click', () => almReanudarSnap(i));
+        btnXls.addEventListener('click',  () => almExportarSnap(i));
+        btnDel.addEventListener('click',  () => almEliminarSnap(i));
+
+        row.appendChild(btnVer);
+        row.appendChild(btnRean);
+        row.appendChild(btnXls);
+        row.appendChild(btnDel);
+        card.appendChild(row);
+
+        // Visor expandible
+        const visor = document.createElement('div');
+        visor.id = 'visor-snap-' + i;
+        visor.style.display = 'none';
+        visor.style.marginTop = '10px';
+        card.appendChild(visor);
+
         cont.appendChild(card);
     });
 }
+
 
 function almVerInforme(idx) {
     const visor = document.getElementById(`visor-snap-${idx}`);
