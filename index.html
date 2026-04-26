@@ -348,7 +348,14 @@
             <span style="font-size:11px;font-weight:400;margin-top:3px;color:#555;line-height:1.4;">Descarga en tu celular para usar sin internet</span>
         </span>
     </button>
-    <div style="font-size:10px;color:#444;text-align:center;margin-top:8px;font-family:'Barlow',sans-serif;letter-spacing:1px;">PIEERS PRO · v15</div>
+    <button onclick="descargarApp()" style="width:100%;padding:13px 16px;border:1px solid #333;border-radius:12px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:14px;background:transparent;margin-top:4px;">
+        <span style="font-size:24px;min-width:36px;text-align:center;">💾</span>
+        <span style="display:flex;flex-direction:column;">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;color:white;text-transform:uppercase;">GUARDAR ARCHIVO HTML</span>
+            <span style="font-size:11px;font-weight:400;margin-top:3px;color:#555;line-height:1.4;">Descarga la app para abrir sin internet</span>
+        </span>
+    </button>
+    <div style="font-size:10px;color:#444;text-align:center;margin-top:8px;font-family:'Barlow',sans-serif;letter-spacing:1px;">PIEERS PRO · v17</div>
 </div>
 
 <!-- ══════ PANTALLA LOGIN ══════ -->
@@ -417,6 +424,7 @@
             <button id="btn-alm-exportar" onclick="almExportar()" class="hidden">📊 Exportar a Excel</button>
             <div class="menu-section">App</div>
             <button onclick="pwaInstalar();toggleMenu();">📲 Instalar en celular</button>
+            <button onclick="descargarApp();toggleMenu();">💾 Guardar archivo HTML</button>
             <button onclick="cerrarSesion();toggleMenu();" style="color:#E57373;">🔓 Cerrar sesión</button>
             <button onclick="resetearApp();toggleMenu();" class="menu-btn-danger">⚠️ Borrar todo y reiniciar</button>
         </div>
@@ -1953,7 +1961,6 @@ function buscarEnAlmComp(q) {
             k.includes(query) || (v.desc || '').toUpperCase().includes(query)
         );
     }
-    // Ordenar: con stock primero, luego por stock desc
     entries.sort((a, b) => b[1].stock - a[1].stock);
 
     if (!entries.length) {
@@ -1966,18 +1973,31 @@ function buscarEnAlmComp(q) {
     entries.slice(0, 80).forEach(([cod, v]) => {
         const div = document.createElement('div');
         div.className = 'madc-item';
-        // Resaltar si este código también está en el maestro del comparativo
+        div.style.flexDirection = 'column';
+        div.style.gap = '8px';
         const enMaestro = maestroMap.has(cod);
         if (enMaestro) div.style.borderLeftColor = '#F9A825';
 
         const stockClass = v.stock === 0 ? 'cero' : v.stock <= 2 ? 'bajo' : '';
+        const conteoActual = maestroMap.get(cod);
+        const conteoTxt = conteoActual ? `<span style="font-size:9px;color:#F9A825;font-family:Barlow,sans-serif;letter-spacing:1px;">✓ EN CONTEO: ${conteoActual.real} uds.</span>` : '';
+
         div.innerHTML = `
-            <div class="madc-item-info">
-                ${enMaestro ? '<span style="font-size:9px;color:#F9A825;font-family:Barlow,sans-serif;text-transform:uppercase;letter-spacing:1px;">✓ En inventario activo</span><br>' : ''}
-                <span class="madc-item-desc">${v.desc || '(sin descripción)'}</span>
-                <span class="madc-item-cod">${cod}</span>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div class="madc-item-info">
+                    ${conteoTxt}
+                    <div class="madc-item-desc">${v.desc || '(sin descripción)'}</div>
+                    <div class="madc-item-cod">${cod}</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;">
+                    <div class="madc-item-stock ${stockClass}">${v.stock}</div>
+                    <div style="font-size:9px;color:#888;">en almacén</div>
+                </div>
             </div>
-            <span class="madc-item-stock ${stockClass}">${v.stock}</span>`;
+            <button onclick="agregarAlConteoDesdeAlm('${cod}')"
+                style="width:100%;padding:10px;border:none;border-radius:8px;background:${enMaestro?'#1a2a0a':'#0a1a0a'};color:${enMaestro?'#8BC34A':'#4CAF50'};font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;border:1px solid ${enMaestro?'#558B2F':'#2E7D32'};">
+                + AGREGAR AL CONTEO (sin afectar stock)
+            </button>`;
         frag.appendChild(div);
     });
     cont.appendChild(frag);
@@ -1987,6 +2007,45 @@ function buscarEnAlmComp(q) {
         p.style.cssText = 'color:#888;text-align:center;font-size:11px;padding:8px;';
         p.textContent = `... y ${entries.length - 80} más. Refina la búsqueda.`;
         cont.appendChild(p);
+    }
+}
+
+// Agregar código de almacén al conteo comparativo SIN tocar el stock
+function agregarAlConteoDesdeAlm(cod) {
+    if (!cod) return;
+    // Solo agrega al historial/maestro del comparativo, no modifica almMap
+    historial.push(cod);
+    if (maestroMap.has(cod)) {
+        maestroMap.get(cod).real++;
+    } else {
+        maestroMap.set(cod, { exp: 0, real: 1 });
+    }
+    schedSave('comp');
+    schedRender('comp', cod);
+    beepOK();
+    showToast(`✅ ${cod} agregado al conteo`, '#1B5E20');
+    // Refrescar la lista para mostrar el nuevo conteo
+    const input = document.getElementById('madc-input');
+    buscarEnAlmComp(input ? input.value : '');
+}
+
+
+// ── DESCARGAR APP COMO ARCHIVO HTML ──
+function descargarApp() {
+    try {
+        const html = document.documentElement.outerHTML;
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = 'PIEERS_PRO_v17.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('💾 Descargando PIEERS_PRO_v17.html...', '#111');
+    } catch(e) {
+        alert('Para guardar: Menú del navegador → "Guardar página como..." → Guardar como HTML');
     }
 }
 
@@ -2043,7 +2102,7 @@ let syncTimer     = null;
 let pinBuffer     = '';
 
 // ── INICIAR APP ──
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('load', async () => {
     // Intentar reanudar sesión guardada
     const sesGuardada = localStorage.getItem('pieers_sesion');
     if (sesGuardada) {
