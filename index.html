@@ -13,6 +13,17 @@
     <meta name="description" content="Auditoría y almacén de inventario profesional">
     <link rel="manifest" id="pwa-manifest">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script>
+        // ── SUPABASE CONFIG ──
+        const SB_URL  = 'https://nptsmrjtleudvcjfulsq.supabase.co';
+        const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wdHNtcmp0bGV1ZHZjamZ1bHNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxOTUxMjEsImV4cCI6MjA5Mjc3MTEyMX0.40tMe-L-nbJw5tdsFYGMb9AG1VaBzpIdVqwDC3pGTNI';
+        const SB_H    = { 'apikey': SB_KEY, 'Authorization': 'Bearer '+SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+        async function sbGet(tabla, params='')    { const r=await fetch(`${SB_URL}/rest/v1/${tabla}?${params}`,{headers:SB_H}); return r.ok?r.json():null; }
+        async function sbPost(tabla, body)        { const r=await fetch(`${SB_URL}/rest/v1/${tabla}`,{method:'POST',headers:SB_H,body:JSON.stringify(body)}); return r.ok?r.json():null; }
+        async function sbPatch(tabla, params, body){ const r=await fetch(`${SB_URL}/rest/v1/${tabla}?${params}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify(body)}); return r.ok; }
+        async function sbDelete(tabla, params)    { const r=await fetch(`${SB_URL}/rest/v1/${tabla}?${params}`,{method:'DELETE',headers:SB_H}); return r.ok; }
+        async function sbUpsert(tabla, body, onConflict){ const r=await fetch(`${SB_URL}/rest/v1/${tabla}?on_conflict=${onConflict}`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(body)}); return r.ok; }
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap');
 
@@ -113,7 +124,42 @@
         .card-lote  { background: #1a1a1a; padding: 14px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--rojo); }
         .hidden     { display: none !important; }
 
-        /* ── PWA INSTALL BANNER ── */
+        /* ── LOGIN SCREEN ── */
+        #pantalla-login { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:var(--negro); padding:24px; gap:0; }
+        .login-logo { font-family:'Barlow Condensed',sans-serif; font-size:42px; font-weight:900; color:white; letter-spacing:3px; margin-bottom:4px; }
+        .login-logo span { color:var(--rojo); }
+        .login-sub { font-size:11px; color:#555; letter-spacing:2px; text-transform:uppercase; margin-bottom:36px; }
+        .login-card { background:#111; border-radius:16px; padding:24px 20px; width:100%; max-width:340px; border:1px solid #222; }
+        .login-label { font-size:11px; color:#666; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; font-family:'Barlow',sans-serif; }
+        .login-users { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+        .login-user-btn { padding:14px 16px; border-radius:10px; border:2px solid #222; background:#1a1a1a; color:white; font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:700; letter-spacing:1px; cursor:pointer; text-align:left; display:flex; align-items:center; gap:12px; transition:all 0.15s; }
+        .login-user-btn:active, .login-user-btn.sel { border-color:var(--rojo); background:#1a0a0a; }
+        .login-user-btn .u-rol { font-size:10px; color:#555; margin-left:auto; letter-spacing:1px; }
+        .login-user-btn.sel .u-rol { color:var(--rojo); }
+        .login-pin-wrap { margin-bottom:20px; }
+        .login-pin-dots { display:flex; gap:10px; justify-content:center; margin:12px 0; }
+        .login-pin-dot { width:14px; height:14px; border-radius:50%; border:2px solid #333; background:transparent; transition:all 0.1s; }
+        .login-pin-dot.filled { background:var(--rojo); border-color:var(--rojo); }
+        .login-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+        .login-key { padding:16px 8px; border-radius:10px; border:1px solid #222; background:#1a1a1a; color:white; font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:700; cursor:pointer; transition:all 0.1s; text-align:center; }
+        .login-key:active { background:#333; transform:scale(0.95); }
+        .login-key.del { font-size:16px; color:#888; }
+        .login-key.ok  { background:var(--rojo); color:white; border-color:var(--rojo); }
+        .login-error { color:#E57373; font-size:12px; text-align:center; margin-top:8px; min-height:18px; font-family:'Barlow',sans-serif; }
+        .login-online { display:flex; flex-wrap:wrap; gap:6px; margin-top:20px; }
+        .login-online-chip { background:#0a1a0a; border:1px solid #1a3a1a; border-radius:20px; padding:4px 10px; font-size:11px; color:#4CAF50; font-family:'Barlow',sans-serif; display:flex; align-items:center; gap:4px; }
+        .login-online-chip::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:#4CAF50; }
+
+        /* ── BADGE USUARIO EN HEADER ── */
+        .header-user { font-size:10px; color:#888; font-family:'Barlow',sans-serif; margin-left:6px; padding:2px 8px; background:#1a1a1a; border-radius:10px; border:1px solid #2a2a2a; }
+        .header-user span { color:white; font-weight:600; }
+
+        /* ── PANEL USUARIOS CONECTADOS ── */
+        #panel-online { display:none; position:fixed; top:48px; left:0; right:0; background:#0a1a0a; border-bottom:2px solid #1a3a1a; padding:6px 12px; z-index:200; flex-wrap:wrap; gap:6px; align-items:center; }
+        #panel-online.visible { display:flex; }
+        .online-chip { background:#111; border:1px solid #1a3a1a; border-radius:20px; padding:4px 10px; font-size:11px; color:#4CAF50; font-family:'Barlow',sans-serif; display:flex; align-items:center; gap:5px; }
+        .online-chip::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:#4CAF50; animation:pulse-dot 2s infinite; }
+        @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
         #pwa-banner { display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:var(--negro); border-top:3px solid var(--rojo); padding:12px 16px; flex-direction:row; align-items:center; gap:10px; box-shadow:0 -4px 20px rgba(0,0,0,0.6); }
         #pwa-banner.visible { display:flex; }
         .pwa-banner-icon { font-size:28px; flex-shrink:0; }
@@ -132,7 +178,7 @@
         .alm-btn-retiro { flex: 1.6; padding: 9px 5px; border: 2px solid var(--rojo); border-radius: 8px; background: var(--negro); color: white; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; transition: all 0.15s; }
         .alm-btn-retiro:active { filter: brightness(0.85); }
 
-        #alm-estado-badge { font-size: 11px; color: var(--gris-mid); flex-shrink: 0; text-align: center; padding: 3px 8px; background: var(--gris-bg); border-radius: 6px; border: 1px solid var(--gris-borde); }
+        #alm-estado-badge { font-size: 15px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.5px; color: var(--gris-mid); flex-shrink: 0; text-align: center; padding: 8px 12px; background: var(--gris-bg); border-radius: 8px; border: 1px solid var(--gris-borde); }
 
         .alm-load-row { display: flex; gap: 5px; flex-shrink: 0; }
         .alm-load-btn { flex: 1; padding: 8px 6px; border: none; border-radius: 8px; cursor: pointer; font-size: 10px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.3px; text-transform: uppercase; transition: filter 0.15s; }
@@ -215,6 +261,34 @@
         /* ── PANEL DESCRIPCIÓN ── */
         #panel-desc { display: none; margin: 0 8px 4px; background: #fff0f0; border: 1px solid var(--rojo); border-radius: 8px; padding: 6px 12px; flex-shrink: 0; }
 
+        /* ── PANEL ALMACÉN EN COMPARATIVO ── */
+        #panel-alm-comp { display: none; margin: 0 8px 4px; background: #0a1a0a; border: 2px solid #2E7D32; border-radius: 8px; padding: 8px 12px; flex-shrink: 0; flex-direction: column; gap: 2px; }
+        #panel-alm-comp.visible { display: flex; }
+        .pac-row { display: flex; align-items: center; gap: 8px; }
+        .pac-ico  { font-size: 16px; flex-shrink: 0; }
+        .pac-cod  { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; color: #888; letter-spacing: 1px; }
+        .pac-desc { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; color: #ccc; flex: 1; line-height: 1.3; }
+        .pac-stock-badge { background: #1B5E20; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; padding: 3px 12px; border-radius: 6px; letter-spacing: 1px; flex-shrink: 0; }
+        .pac-stock-badge.cero { background: #B71C1C; }
+        .pac-stock-badge.bajo { background: #E65100; }
+        .pac-label { font-size: 9px; color: #4CAF50; text-transform: uppercase; letter-spacing: 1px; font-family: 'Barlow', sans-serif; }
+
+        /* ── MINI MODAL ALMACÉN DESDE COMPARATIVO ── */
+        #modal-alm-desde-comp { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 6000; flex-direction: column; }
+        #modal-alm-desde-comp .madc-header { background: var(--negro); padding: 10px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 3px solid #2E7D32; flex-shrink: 0; }
+        #modal-alm-desde-comp .madc-title { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 900; color: white; letter-spacing: 1px; flex: 1; }
+        #modal-alm-desde-comp .madc-close { background: none; border: none; color: #aaa; font-size: 22px; cursor: pointer; }
+        .madc-search { margin: 8px 12px; display: flex; gap: 6px; flex-shrink: 0; }
+        .madc-search input { flex: 1; padding: 9px 12px; border-radius: 8px; border: 2px solid var(--gris-borde); background: var(--gris-bg); font-size: 14px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 1px; color: var(--texto); }
+        .madc-results { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
+        .madc-item { background: var(--gris-bg); border-radius: 8px; padding: 10px 12px; margin-bottom: 5px; border-left: 4px solid #2E7D32; display: flex; align-items: center; gap: 10px; }
+        .madc-item-info { flex: 1; }
+        .madc-item-cod { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; color: #888; letter-spacing: 1px; }
+        .madc-item-desc { font-size: 12px; color: var(--texto); line-height: 1.3; margin-top: 1px; }
+        .madc-item-stock { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 900; color: #2E7D32; flex-shrink: 0; min-width: 40px; text-align: right; }
+        .madc-item-stock.cero { color: #B71C1C; }
+        .madc-item-stock.bajo { color: #E65100; }
+
         /* ── COMP: botones archivo ── */
         #comp-file-btns { display: none; gap: 6px; flex-shrink: 0; padding: 2px 0; }
         .comp-file-btn { flex: 1; padding: 10px 6px; border: none; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.3px; text-transform: uppercase; transition: filter 0.15s; }
@@ -247,22 +321,22 @@
 <body class="modo-comp">
 
 <!-- ══════ SELECTOR ══════ -->
-<div id="pantalla-modo">
+<div id="pantalla-modo" style="display:none;">
     <div class="logo-modo">⬡ <span class="logo-acento">PIEERS</span> AUDITOR PRO</div>
     <div class="logo-sub">SELECCIONA EL MODO DE TRABAJO</div>
     <div class="logo-v">v7.0</div>
     <button class="btn-modo btn-comp" onclick="seleccionarModo('comp')">
         <span class="ico">📋</span>
         <span class="txt">
-            <span class="tit">MODO COMPARATIVO</span>
-            <span class="desc">Carga base maestra → pistoleas → detecta FALTA, SOBRA u OK.</span>
+            <span class="tit">AUDITORÍA / COMPARATIVO</span>
+            <span class="desc">Compara el inventario esperado con el físico escaneado. Detecta faltantes y sobrantes.</span>
         </span>
     </button>
     <button class="btn-modo btn-alm" onclick="seleccionarModo('alm')">
         <span class="ico">🏪</span>
         <span class="txt">
-            <span class="tit">MÓDULO ALMACÉN</span>
-            <span class="desc">Carga stock → busca productos → registra retiros e ingresos.</span>
+            <span class="tit">GESTIÓN DE ALMACÉN</span>
+            <span class="desc">Carga tu inventario, busca prendas y registra retiros. Guarda informes y consulta reportes.</span>
         </span>
     </button>
 
@@ -274,36 +348,77 @@
             <span style="font-size:11px;font-weight:400;margin-top:3px;color:#555;line-height:1.4;">Descarga en tu celular para usar sin internet</span>
         </span>
     </button>
-    <div style="font-size:10px;color:#333;text-align:center;margin-top:2px;">v10.0 — PIEERS AUDITOR PRO</div>
+    <div style="font-size:10px;color:#444;text-align:center;margin-top:8px;font-family:'Barlow',sans-serif;letter-spacing:1px;">PIEERS PRO · v15</div>
 </div>
 
+<!-- ══════ PANTALLA LOGIN ══════ -->
+<div id="pantalla-login">
+    <div class="login-logo"><span>P</span>IEERS PRO</div>
+    <div class="login-sub">Sistema de inventario</div>
+    <div class="login-card">
+        <div class="login-label">Selecciona tu usuario</div>
+        <div class="login-users" id="login-users-lista">
+            <div style="color:#555;font-size:13px;text-align:center;padding:12px;">Cargando usuarios...</div>
+        </div>
+        <div class="login-pin-wrap" id="login-pin-section" style="display:none;">
+            <div class="login-label">Ingresa tu PIN</div>
+            <div class="login-pin-dots" id="pin-dots">
+                <div class="login-pin-dot" id="d0"></div>
+                <div class="login-pin-dot" id="d1"></div>
+                <div class="login-pin-dot" id="d2"></div>
+                <div class="login-pin-dot" id="d3"></div>
+            </div>
+            <div class="login-keypad">
+                <button class="login-key" onclick="loginKey('1')">1</button>
+                <button class="login-key" onclick="loginKey('2')">2</button>
+                <button class="login-key" onclick="loginKey('3')">3</button>
+                <button class="login-key" onclick="loginKey('4')">4</button>
+                <button class="login-key" onclick="loginKey('5')">5</button>
+                <button class="login-key" onclick="loginKey('6')">6</button>
+                <button class="login-key" onclick="loginKey('7')">7</button>
+                <button class="login-key" onclick="loginKey('8')">8</button>
+                <button class="login-key" onclick="loginKey('9')">9</button>
+                <button class="login-key del" onclick="loginDel()">⌫</button>
+                <button class="login-key" onclick="loginKey('0')">0</button>
+                <button class="login-key ok" onclick="loginOk()">✓</button>
+            </div>
+            <div class="login-error" id="login-error"></div>
+        </div>
+        <div id="login-online-wrap" style="display:none;">
+            <div class="login-label" style="margin-top:4px;">Ahora conectados</div>
+            <div class="login-online" id="login-online-lista"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════ PANEL USUARIOS EN LÍNEA ══════ -->
+<div id="panel-online"></div>
+
 <!-- ══════ APP PRINCIPAL ══════ -->
-<div id="app-principal" class="hidden" style="display:flex;flex-direction:column;height:100vh;">
+<div id="app-principal" class="hidden" style="flex-direction:column;height:100vh;">
 
     <div class="header-app">
         <div style="display:flex;align-items:center;">
             <span class="header-logo"><span class="logo-red">P</span>IEERS PRO</span>
             <span class="badge-modo" id="badge-txt">COMPARATIVO</span>
+            <span class="header-user" id="header-user-badge" style="display:none;">👤 <span id="header-user-nombre">—</span></span>
         </div>
         <div style="display:flex;gap:6px;">
-            <button class="btn-cambio" onclick="volverSelector()">⇄ MODO</button>
+            <button class="btn-cambio" onclick="volverSelector()">← INICIO</button>
             <button class="btn-menu"   onclick="toggleMenu()">☰ OPC.</button>
         </div>
         <div id="menuContent" class="menu-dropdown">
-            <div id="menu-sec-comp" class="menu-section">Comparativo</div>
-            <button id="btn-carga" onclick="document.getElementById('fileInput').click()">📥 Cargar Maestro (Excel o TXT)</button>
-            <button id="btn-stock" onclick="document.getElementById('stockInput').click()">🔄 Convertir Stock → descarga PIEERS</button>
+            <div id="menu-sec-comp" class="menu-section hidden">Comparativo</div>
+            <button id="btn-carga"  class="hidden" onclick="document.getElementById('fileInput').click()">📥 Cargar Maestro</button>
+            <button id="btn-stock"  class="hidden" onclick="document.getElementById('stockInput').click()">🔄 Convertir Stock → PIEERS</button>
             <div id="menu-sec-alm" class="menu-section hidden">Almacén</div>
-            <button id="btn-alm-deshacer" onclick="almDeshacer()" class="hidden">↩️ Deshacer último movimiento</button>
-            <button id="btn-alm-guardar" onclick="almGuardarSnapshot()" class="hidden">💾 Guardar estado almacén</button>
-            <button id="btn-alm-exportar" onclick="almExportar()" class="hidden">📊 Exportar almacén (Excel)</button>
+            <button id="btn-alm-deshacer" onclick="almDeshacer()" class="hidden">↩️ Deshacer movimiento</button>
+            <button id="btn-alm-guardar"  onclick="almGuardarSnapshot()" class="hidden">💾 Guardar informe</button>
+            <button id="btn-alm-exportar" onclick="almExportar()" class="hidden">📊 Exportar a Excel</button>
             <div class="menu-section">App</div>
-            <button onclick="pwaInstalar();toggleMenu();">📲 Instalar app en celular</button>
-            <div class="menu-section">Sesión</div>
-            <button id="btn-guardar-lote" onclick="guardarLote()">💾 Guardar auditoría actual</button>
-            <button onclick="abrirModal('modalLotes')">📂 Reportes guardados</button>
-            <button onclick="resetearModulo()" class="menu-btn-danger">🗑️ Resetear módulo actual</button>
-            <button onclick="resetearApp()" class="menu-btn-danger">⚠️ Resetear TODO</button>
+            <button onclick="pwaInstalar();toggleMenu();">📲 Instalar en celular</button>
+            <button onclick="cerrarSesion();toggleMenu();" style="color:#E57373;">🔓 Cerrar sesión</button>
+            <button onclick="resetearApp();toggleMenu();" class="menu-btn-danger">⚠️ Borrar todo y reiniciar</button>
         </div>
     </div>
 
@@ -321,6 +436,19 @@
         <span style="font-size:9px;color:#888;text-transform:uppercase;">Descripción — </span>
         <span id="desc-cod" style="font-size:9px;color:#aaa;"></span>
         <span id="desc-txt" style="font-size:13px;color:var(--rojo);font-weight:bold;display:block;margin-top:1px;"></span>
+    </div>
+
+    <!-- PANEL ALMACÉN EN COMPARATIVO (aparece al escanear si hay stock en almacén) -->
+    <div id="panel-alm-comp">
+        <div class="pac-row">
+            <span class="pac-ico">🏪</span>
+            <div style="flex:1">
+                <div class="pac-label">EN ALMACÉN</div>
+                <div id="pac-desc" class="pac-desc">—</div>
+                <div id="pac-cod" class="pac-cod">—</div>
+            </div>
+            <div id="pac-stock" class="pac-stock-badge">0</div>
+        </div>
     </div>
 
     <div class="progress-box">
@@ -347,6 +475,7 @@
             <button class="comp-file-btn" style="background:var(--negro);color:white;" onclick="document.getElementById('fileInput').click()">📥 CARGAR MAESTRO</button>
             <button class="comp-file-btn" style="background:var(--negro-soft);color:#ccc;border:1px solid #444;" onclick="document.getElementById('compStockInput').click()">🔄 STOCK → MAESTRO</button>
         </div>
+        <button class="comp-file-btn" style="background:#0a1a0a;color:#4CAF50;border:2px solid #2E7D32;width:100%;letter-spacing:1px;" onclick="abrirAlmDesdeComp()">🏪 VER STOCK EN ALMACÉN</button>
     </div>
 
     <!-- PANEL COMPARATIVO -->
@@ -370,8 +499,8 @@
     <!-- Footer comparativo -->
     <div id="footer-comp" class="module-footer hidden" style="padding:2px 8px 6px;">
         <button class="btn-modulo btn-guardar-mod" onclick="guardarLote()">💾 GUARDAR</button>
-        <button class="btn-modulo btn-reportes-mod" onclick="abrirModal('modalLotes')">📂 REPORTES</button>
-        <button class="btn-modulo btn-reset-mod" onclick="resetearModulo()">🗑️ RESETEAR</button>
+        <button class="btn-modulo btn-reportes-mod" onclick="abrirModal('modalLotes')">📋 REPORTES</button>
+        <button class="btn-modulo btn-reset-mod" onclick="resetearModulo()">🔄 REINICIAR</button>
     </div>
 
     <!-- OVERLAY ERROR -->
@@ -393,8 +522,8 @@
 
         <!-- Barra acciones -->
         <div class="alm-action-bar">
-            <button class="alm-btn-buscar" onclick="abrirModalBusqueda()">🔍 AUTOBÚS</button>
-            <button class="alm-btn-retiro" id="tab-retiro" onclick="abrirModalMovimiento()">− REGISTRADOR RETIRO</button>
+            <button class="alm-btn-buscar" onclick="abrirModalBusqueda()">🔍 BUSCAR</button>
+            <button class="alm-btn-retiro" id="tab-retiro" onclick="abrirModalMovimiento()">− REGISTRAR RETIRO</button>
         </div>
 
         <!-- Badge -->
@@ -575,9 +704,7 @@ function cerrarConfirm() {
     confirmCallback = null;
 }
 document.getElementById('btn-confirm-yes').addEventListener('click', () => {
-    const cb = confirmCallback;
-    cerrarConfirm();
-    if (cb) cb();
+    cerrarConfirm(); if (confirmCallback) confirmCallback();
 });
 
 // ── AUDIO ──
@@ -623,7 +750,7 @@ function seleccionarModo(modo) {
 
         const compFileBtns = $('comp-file-btns');
         if (compFileBtns) compFileBtns.style.display = 'none';
-        ['btn-carga','btn-stock'].forEach(id => { const el=$(id); if(el) el.style.display='none'; });
+        ['btn-carga','btn-stock'].forEach(id => { const el=$(id); if(el) el.classList.add('hidden'); });
         $s('menu-sec-alm').classList.add('hidden');
         $s('menu-sec-comp').classList.add('hidden');
         ['btn-alm-deshacer','btn-alm-guardar','btn-alm-exportar'].forEach(id => { const el=$(id); if(el) el.classList.add('hidden'); });
@@ -638,7 +765,7 @@ function seleccionarModo(modo) {
             document.body.className = 'modo-comp';
             $s('badge-txt').textContent = 'COMPARATIVO';
             $s('menu-sec-comp').classList.remove('hidden');
-            ['btn-carga','btn-stock'].forEach(id => { const el=$(id); if(el) el.style.display='block'; });
+            ['btn-carga','btn-stock'].forEach(id => { const el=$(id); if(el) el.classList.remove('hidden'); });
             $s('vista-comp').classList.remove('hidden');
             $s('footer-comp').classList.remove('hidden');
             if (compFileBtns) compFileBtns.style.display = 'flex';
@@ -669,32 +796,21 @@ function volverSelector() {
 
 // ── SCANNER COMPARATIVO ──
 const scannerEl = document.getElementById('scanner');
-let bufferBT = '', flushTimer = null, flushLock = false;
+let bufferBT = '', flushTimer = null;
 function flushBuffer() {
-    if (flushLock) return;
-    flushLock = true;
     clearTimeout(flushTimer);
     const cod = bufferBT.trim(); bufferBT = ''; scannerEl.value = '';
     if (cod) procesarCodigo(cod);
-    setTimeout(() => { flushLock = false; }, 300);
 }
 scannerEl.addEventListener('keydown', function(e) {
     if (bloqueado) { e.preventDefault(); return; }
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        bufferBT = scannerEl.value.trim() || bufferBT.trim();
-        clearTimeout(flushTimer);
-        flushBuffer();
-    }
+    if (e.key === 'Enter') { e.preventDefault(); bufferBT = scannerEl.value.trim() || bufferBT.trim(); flushBuffer(); }
 });
 scannerEl.addEventListener('input', function() {
     if (bloqueado) { scannerEl.value=''; return; }
     bufferBT = scannerEl.value;
     clearTimeout(flushTimer);
-    flushTimer = setTimeout(() => {
-        if (bufferBT.length >= 4 && !flushLock) flushBuffer();
-        else { bufferBT=''; scannerEl.value=''; }
-    }, 120);
+    flushTimer = setTimeout(() => { if (bufferBT.length >= 4) flushBuffer(); else { bufferBT=''; scannerEl.value=''; } }, 80);
 });
 
 function procesarCodigo(cod) {
@@ -704,7 +820,27 @@ function procesarCodigo(cod) {
         if (maestroMap.has(cod)) maestroMap.get(cod).real++;
         else maestroMap.set(cod, { exp:0, real:1 });
         schedSave('comp'); schedRender('comp', cod); beepOK();
+        // Mostrar stock en almacén si existe
+        mostrarPanelAlmComp(cod);
     } else { mostrarError(cod, 'COMP: Se esperan 13 dígitos'); }
+}
+
+function mostrarPanelAlmComp(cod) {
+    const panel = document.getElementById('panel-alm-comp');
+    if (!panel) return;
+    if (!almMap || !almMap.size) { panel.classList.remove('visible'); return; }
+    const v = almMap.get(cod);
+    if (!v) { panel.classList.remove('visible'); return; }
+    // Hay stock en almacén — mostrarlo
+    document.getElementById('pac-cod').textContent  = cod;
+    document.getElementById('pac-desc').textContent = v.desc || '(sin descripción)';
+    const badge = document.getElementById('pac-stock');
+    badge.textContent = v.stock;
+    badge.className = 'pac-stock-badge' + (v.stock === 0 ? ' cero' : v.stock <= 2 ? ' bajo' : '');
+    panel.classList.add('visible');
+    // Ocultar después de 4 segundos
+    clearTimeout(panel._hideTimer);
+    panel._hideTimer = setTimeout(() => panel.classList.remove('visible'), 4000);
 }
 
 function mostrarError(cod, detalle) {
@@ -852,14 +988,14 @@ function renderAlm(filtro='') {
 
     const badge = document.getElementById('alm-estado-badge');
     if (almMap.size === 0) {
-        badge.textContent = 'Sin inventario — carga con los botones de arriba';
-        badge.style.color = '#888';
-        badge.style.fontWeight = 'normal';
+        badge.innerHTML = '<span style="font-size:13px;color:#666;font-weight:400;">Sin inventario — carga con los botones de abajo</span>';
     } else {
         const total = [...almMap.values()].reduce((a,v)=>a+v.stock,0);
-        badge.innerHTML = `<span style="color:var(--rojo);font-weight:900;">${almMap.size.toLocaleString()} códigos</span> | <span style="color:var(--rojo);font-weight:900;">${total.toLocaleString()} unidades</span>`;
-        badge.style.color = 'var(--texto)';
-        badge.style.fontWeight = 'normal';
+        badge.innerHTML = `
+            <span style="color:var(--rojo);font-size:22px;font-weight:900;letter-spacing:1px;">${almMap.size.toLocaleString()}</span>
+            <span style="color:#888;font-size:11px;font-weight:400;"> CÓDIGOS &nbsp;|&nbsp; </span>
+            <span style="color:var(--rojo);font-size:22px;font-weight:900;letter-spacing:1px;">${total.toLocaleString()}</span>
+            <span style="color:#888;font-size:11px;font-weight:400;"> UNIDADES</span>`;
     }
 
     let entries = [...almMap.entries()];
@@ -1222,8 +1358,8 @@ document.getElementById('almInput').addEventListener('change', function(e) {
                     // Cambiar botones del confirm
                     document.getElementById('btn-confirm-yes').textContent = '➕ AGREGAR';
                     document.getElementById('btn-confirm-yes').onclick = () => {
-                        const cb = () => aplicarCargaAlm(nuevos, 'merge');
-                        cerrarConfirm(); cb();
+                        cerrarConfirm();
+                        aplicarCargaAlm(nuevos, 'merge');
                     };
                     // Añadir botón reemplazar
                     let btnR = document.getElementById('btn-confirm-replace');
@@ -1485,26 +1621,20 @@ function movSetInputMode(mode) {
 
 // Scanner del modal de movimiento
 const movScanEl = document.getElementById('mov-scanner');
-let movBufBT='', movFlushTimer=null, movFlushLock=false;
-function movFlush() {
-    if (movFlushLock) return;
-    movFlushLock = true;
-    clearTimeout(movFlushTimer);
-    const cod = (movBufBT.trim()||movScanEl.value.trim()).toUpperCase();
-    movBufBT=''; movScanEl.value='';
-    if (cod.length >= 4) { almRegistrarPorCodigo(cod,'',1); cerrarModalMovimiento(); }
-    setTimeout(() => { movFlushLock = false; }, 300);
-}
+let movBufBT='', movFlushTimer=null;
 movScanEl.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
-        e.preventDefault();
         clearTimeout(movFlushTimer);
-        movBufBT = movScanEl.value.trim() || movBufBT.trim();
-        movFlush();
+        const cod = (movBufBT.trim()||movScanEl.value.trim()).toUpperCase();
+        movBufBT=''; movScanEl.value='';
+        if (cod.length >= 4) { almRegistrarPorCodigo(cod,'',1); cerrarModalMovimiento(); }
     } else if (e.key.length===1) {
         movBufBT += e.key;
         clearTimeout(movFlushTimer);
-        movFlushTimer = setTimeout(() => { movFlush(); }, 180);
+        movFlushTimer = setTimeout(() => {
+            const cod = movBufBT.trim().toUpperCase(); movBufBT=''; movScanEl.value='';
+            if (cod.length >= 4) { almRegistrarPorCodigo(cod,'',1); cerrarModalMovimiento(); }
+        }, 180);
     }
 });
 
@@ -1789,8 +1919,96 @@ document.addEventListener('click', (e) => {
     if (!bloqueado&&modoActual&&modoActual!=='alm'&&tag!=='BUTTON'&&tag!=='INPUT'&&tag!=='SELECT') focusScanner();
 });
 
+// ══════════════════════════════════════════════════════
+//  CONSULTAR ALMACÉN DESDE COMPARATIVO
+// ══════════════════════════════════════════════════════
+function abrirAlmDesdeComp() {
+    const modal = document.getElementById('modal-alm-desde-comp');
+    if (!modal) return;
+    if (!almMap || !almMap.size) {
+        showToast('⚠️ Sin inventario en Almacén. Carga primero el módulo Almacén.', '#E65100');
+        return;
+    }
+    document.getElementById('madc-badge').textContent = almMap.size.toLocaleString() + ' cód.';
+    document.getElementById('madc-input').value = '';
+    modal.style.display = 'flex';
+    buscarEnAlmComp('');
+    setTimeout(() => document.getElementById('madc-input').focus(), 100);
+}
+
+function cerrarAlmDesdeComp() {
+    const modal = document.getElementById('modal-alm-desde-comp');
+    if (modal) modal.style.display = 'none';
+    focusScanner();
+}
+
+function buscarEnAlmComp(q) {
+    const cont = document.getElementById('madc-results');
+    if (!cont) return;
+    const query = (q || '').trim().toUpperCase();
+
+    let entries = [...almMap.entries()];
+    if (query) {
+        entries = entries.filter(([k, v]) =>
+            k.includes(query) || (v.desc || '').toUpperCase().includes(query)
+        );
+    }
+    // Ordenar: con stock primero, luego por stock desc
+    entries.sort((a, b) => b[1].stock - a[1].stock);
+
+    if (!entries.length) {
+        cont.innerHTML = `<p style="color:#888;text-align:center;margin-top:20px;font-family:'Barlow',sans-serif;font-size:13px;">Sin resultados para "${query}"</p>`;
+        return;
+    }
+
+    cont.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    entries.slice(0, 80).forEach(([cod, v]) => {
+        const div = document.createElement('div');
+        div.className = 'madc-item';
+        // Resaltar si este código también está en el maestro del comparativo
+        const enMaestro = maestroMap.has(cod);
+        if (enMaestro) div.style.borderLeftColor = '#F9A825';
+
+        const stockClass = v.stock === 0 ? 'cero' : v.stock <= 2 ? 'bajo' : '';
+        div.innerHTML = `
+            <div class="madc-item-info">
+                ${enMaestro ? '<span style="font-size:9px;color:#F9A825;font-family:Barlow,sans-serif;text-transform:uppercase;letter-spacing:1px;">✓ En inventario activo</span><br>' : ''}
+                <span class="madc-item-desc">${v.desc || '(sin descripción)'}</span>
+                <span class="madc-item-cod">${cod}</span>
+            </div>
+            <span class="madc-item-stock ${stockClass}">${v.stock}</span>`;
+        frag.appendChild(div);
+    });
+    cont.appendChild(frag);
+
+    if (entries.length > 80) {
+        const p = document.createElement('p');
+        p.style.cssText = 'color:#888;text-align:center;font-size:11px;padding:8px;';
+        p.textContent = `... y ${entries.length - 80} más. Refina la búsqueda.`;
+        cont.appendChild(p);
+    }
+}
+
 window.addEventListener('beforeunload', ()=>{ clearTimeout(saveTimer); clearTimeout(almSaveTimer); if(modoActual==='comp') saveComp(); if(modoActual==='alm') saveAlm(); });
 </script>
+
+
+<!-- ══════ MINI MODAL ALMACÉN DESDE COMPARATIVO ══════ -->
+<div id="modal-alm-desde-comp">
+    <div class="madc-header">
+        <span style="font-size:20px;">🏪</span>
+        <span class="madc-title">STOCK EN ALMACÉN</span>
+        <div id="madc-badge" style="background:#1B5E20;color:white;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;margin-right:6px;">0 cód.</div>
+        <button class="madc-close" onclick="cerrarAlmDesdeComp()">✕</button>
+    </div>
+    <div class="madc-search">
+        <input type="text" id="madc-input" placeholder="Buscar código o nombre..." oninput="buscarEnAlmComp(this.value)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="madc-results" id="madc-results">
+        <p style="color:#888;text-align:center;margin-top:30px;font-family:'Barlow',sans-serif;font-size:13px;">Escribe para buscar o deja vacío para ver todos</p>
+    </div>
+</div>
 
 <!-- ══════ MODAL INFORMES ALMACÉN ══════ -->
 <div id="modal-alm-informes" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:6500;justify-content:center;align-items:flex-start;padding:16px;">
@@ -1817,8 +2035,269 @@ window.addEventListener('beforeunload', ()=>{ clearTimeout(saveTimer); clearTime
 
 <script>
 // ══════════════════════════════════════════════════════
-//  PWA — INSTALACIÓN COMO APP
+//  LOGIN + SINCRONIZACIÓN EN TIEMPO REAL
 // ══════════════════════════════════════════════════════
+let usuarioActual = null;
+let sesionId      = null;
+let syncTimer     = null;
+let pinBuffer     = '';
+
+// ── INICIAR APP ──
+window.addEventListener('DOMContentLoaded', async () => {
+    // Intentar reanudar sesión guardada
+    const sesGuardada = localStorage.getItem('pieers_sesion');
+    if (sesGuardada) {
+        try {
+            const s = JSON.parse(sesGuardada);
+            if (s.id && s.nombre) {
+                usuarioActual = s;
+                await iniciarSesionNube(s);
+                mostrarAppConUsuario();
+                return;
+            }
+        } catch(e) {}
+    }
+    // Sin sesión → mostrar login
+    await cargarUsuariosLogin();
+    await mostrarConectadosLogin();
+});
+
+// ── CARGAR USUARIOS DESDE SUPABASE ──
+async function cargarUsuariosLogin() {
+    const lista = document.getElementById('login-users-lista');
+    try {
+        const users = await sbGet('usuarios', 'order=rol.asc,nombre.asc');
+        if (!users || !users.length) {
+            lista.innerHTML = '<div style="color:#E57373;font-size:12px;text-align:center;">Sin conexión a la base de datos.<br>Verifica tu internet.</div>';
+            return;
+        }
+        lista.innerHTML = '';
+        users.forEach(u => {
+            const btn = document.createElement('button');
+            btn.className = 'login-user-btn';
+            btn.innerHTML = `<span style="font-size:20px;">${u.rol==='admin'?'👑':'👤'}</span><span>${u.nombre}</span><span class="u-rol">${u.rol.toUpperCase()}</span>`;
+            btn.onclick = () => seleccionarUsuario(u);
+            lista.appendChild(btn);
+        });
+    } catch(e) {
+        lista.innerHTML = '<div style="color:#E57373;font-size:12px;text-align:center;">Sin conexión. Verifica tu internet.</div>';
+    }
+}
+
+// ── SELECCIONAR USUARIO → MOSTRAR PIN ──
+let usuarioSeleccionado = null;
+function seleccionarUsuario(u) {
+    usuarioSeleccionado = u;
+    pinBuffer = '';
+    actualizarDots();
+    document.querySelectorAll('.login-user-btn').forEach(b => b.classList.remove('sel'));
+    event.currentTarget.classList.add('sel');
+    document.getElementById('login-pin-section').style.display = 'block';
+    document.getElementById('login-error').textContent = '';
+}
+
+function loginKey(n) {
+    if (pinBuffer.length >= 4) return;
+    pinBuffer += n;
+    actualizarDots();
+    if (pinBuffer.length === 4) setTimeout(loginOk, 200);
+}
+function loginDel() { pinBuffer = pinBuffer.slice(0,-1); actualizarDots(); document.getElementById('login-error').textContent=''; }
+function actualizarDots() {
+    for(let i=0;i<4;i++) {
+        const d=document.getElementById('d'+i);
+        if(d) d.className='login-pin-dot'+(i<pinBuffer.length?' filled':'');
+    }
+}
+async function loginOk() {
+    if (!usuarioSeleccionado) { document.getElementById('login-error').textContent='Selecciona un usuario'; return; }
+    if (pinBuffer.length < 4)  { document.getElementById('login-error').textContent='Ingresa 4 dígitos'; return; }
+    if (pinBuffer !== usuarioSeleccionado.pin) {
+        document.getElementById('login-error').textContent='PIN incorrecto';
+        pinBuffer=''; actualizarDots(); return;
+    }
+    // Login correcto
+    usuarioActual = { id: usuarioSeleccionado.id, nombre: usuarioSeleccionado.nombre, rol: usuarioSeleccionado.rol };
+    localStorage.setItem('pieers_sesion', JSON.stringify(usuarioActual));
+    await iniciarSesionNube(usuarioActual);
+    mostrarAppConUsuario();
+}
+
+// ── INICIAR SESIÓN EN NUBE ──
+async function iniciarSesionNube(u) {
+    try {
+        const rows = await sbPost('sesiones', {
+            usuario_id: u.id,
+            usuario_nombre: u.nombre,
+            modulo: 'inicio',
+            dispositivo: navigator.userAgent.includes('Android')?'Android':navigator.userAgent.includes('iPhone')?'iPhone':'Desktop',
+            activo: true
+        });
+        if (rows && rows[0]) sesionId = rows[0].id;
+    } catch(e) {}
+}
+
+// ── ACTUALIZAR MÓDULO EN SESIÓN ──
+async function actualizarSesionModulo(modulo) {
+    if (!sesionId) return;
+    try { await sbPatch('sesiones', `id=eq.${sesionId}`, { modulo, updated_at: new Date().toISOString() }); } catch(e) {}
+}
+
+// ── MOSTRAR APP ──
+function mostrarAppConUsuario() {
+    document.getElementById('pantalla-login').style.display = 'none';
+    const app = document.getElementById('app-principal');
+    app.classList.remove('hidden');
+    app.style.display = 'flex';
+    // Mostrar badge de usuario en header
+    const badge = document.getElementById('header-user-badge');
+    const nombre = document.getElementById('header-user-nombre');
+    if (badge) badge.style.display = '';
+    if (nombre) nombre.textContent = usuarioActual.nombre;
+    // Mostrar selector de módulo
+    const modo = document.getElementById('pantalla-modo');
+    if (modo) modo.style.display = 'flex';
+    // Iniciar sincronización de usuarios conectados
+    iniciarSyncOnline();
+    // Cargar inventario almacén desde nube
+    cargarAlmDesdeNube();
+}
+
+// ── MOSTRAR CONECTADOS EN LOGIN ──
+async function mostrarConectadosLogin() {
+    try {
+        const activos = await sbGet('sesiones','activo=eq.true&order=updated_at.desc');
+        const wrap = document.getElementById('login-online-wrap');
+        const lista = document.getElementById('login-online-lista');
+        if (!activos || !activos.length) { if(wrap) wrap.style.display='none'; return; }
+        if(wrap) wrap.style.display='block';
+        lista.innerHTML = '';
+        activos.slice(0,5).forEach(s => {
+            const chip = document.createElement('div');
+            chip.className = 'login-online-chip';
+            chip.textContent = `${s.usuario_nombre} · ${s.modulo||'inicio'}`;
+            lista.appendChild(chip);
+        });
+    } catch(e) {}
+}
+
+// ── SINCRONIZAR USUARIOS CONECTADOS EN TIEMPO REAL ──
+function iniciarSyncOnline() {
+    actualizarPanelOnline();
+    clearInterval(syncTimer);
+    syncTimer = setInterval(actualizarPanelOnline, 15000);
+}
+
+async function actualizarPanelOnline() {
+    try {
+        const cutoff = new Date(Date.now() - 5*60*1000).toISOString(); // 5 min
+        const activos = await sbGet('sesiones', `activo=eq.true&updated_at=gte.${cutoff}&order=updated_at.desc`);
+        const panel = document.getElementById('panel-online');
+        if (!activos || activos.length <= 1) { if(panel) panel.classList.remove('visible'); return; }
+        panel.innerHTML = '<span style="font-size:10px;color:#4CAF50;letter-spacing:1px;font-family:Barlow,sans-serif;flex-shrink:0;">EN LÍNEA:</span>';
+        activos.forEach(s => {
+            if (s.id === sesionId) return; // No mostrarme a mí mismo
+            const chip = document.createElement('div');
+            chip.className = 'online-chip';
+            const modLabel = {comp:'Auditando',alm:'Almacén',inicio:'Inicio'}[s.modulo]||s.modulo||'App';
+            chip.textContent = `${s.usuario_nombre} · ${modLabel}`;
+            panel.appendChild(chip);
+        });
+        if (panel.children.length > 1) panel.classList.add('visible');
+        else panel.classList.remove('visible');
+    } catch(e) {}
+}
+
+// ── CERRAR SESIÓN ──
+async function cerrarSesion() {
+    if (sesionId) {
+        try { await sbPatch('sesiones', `id=eq.${sesionId}`, { activo:false }); } catch(e) {}
+    }
+    clearInterval(syncTimer);
+    localStorage.removeItem('pieers_sesion');
+    usuarioActual = null; sesionId = null;
+    document.getElementById('pantalla-login').style.display = 'flex';
+    document.getElementById('app-principal').style.display = 'none';
+    document.getElementById('pantalla-modo').style.display = 'none';
+    document.getElementById('panel-online').classList.remove('visible');
+    pinBuffer=''; usuarioSeleccionado=null;
+    document.getElementById('login-pin-section').style.display='none';
+    cargarUsuariosLogin();
+    mostrarConectadosLogin();
+}
+
+// ── GUARDAR ALM EN NUBE ──
+async function saveAlmNube() {
+    if (!almMap.size) return;
+    const rows = [];
+    almMap.forEach((v,k) => rows.push({ codigo:k, descripcion:v.desc||'', stock:v.stock, updated_at:new Date().toISOString() }));
+    try {
+        // Upsert en lotes de 100
+        for(let i=0;i<rows.length;i+=100) {
+            await sbUpsert('alm_inventario', rows.slice(i,i+100), 'codigo');
+        }
+    } catch(e) {}
+}
+
+// ── CARGAR ALM DESDE NUBE ──
+async function cargarAlmDesdeNube() {
+    try {
+        // Cargar en páginas de 1000
+        let offset=0, total=0;
+        while(true) {
+            const rows = await sbGet('alm_inventario', `order=codigo.asc&limit=1000&offset=${offset}`);
+            if (!rows || !rows.length) break;
+            rows.forEach(r => {
+                if (!almMap.has(r.codigo)) almMap.set(r.codigo, { desc:r.descripcion||'', stock:r.stock||0 });
+            });
+            total += rows.length;
+            offset += 1000;
+            if (rows.length < 1000) break;
+        }
+        if (total > 0) {
+            renderAlm();
+            showToast(`☁️ ${total.toLocaleString()} productos cargados desde la nube`, '#1B5E20');
+        }
+    } catch(e) {}
+}
+
+// ── GUARDAR MOVIMIENTO EN NUBE ──
+async function guardarMovNube(mov) {
+    if (!mov) return;
+    try {
+        await sbPost('alm_movimientos', {
+            codigo: mov.cod,
+            tipo: mov.tipo,
+            cantidad: mov.cant,
+            stock_post: mov.stockPost,
+            usuario_nombre: usuarioActual?.nombre || 'Anónimo'
+        });
+    } catch(e) {}
+}
+
+// ── HOOK seleccionarModo: actualizar módulo en nube SIN recursión ──
+// Parcheamos desde fuera llamando a la función original directamente
+document.querySelectorAll('[onclick*="seleccionarModo"]').forEach(btn => {
+    const match = btn.getAttribute('onclick').match(/seleccionarModo\('(\w+)'\)/);
+    if (match) {
+        btn.addEventListener('click', () => actualizarSesionModulo(match[1]));
+    }
+});
+
+// ── HOOK schedSaveAlm: después de guardar local, guardar en nube ──
+// Sobrescribimos el timer de guardado para añadir sync a nube
+const _origSchedule = schedSaveAlm;
+window._almSaveNubeTimer = null;
+// Monkey-patch: cada vez que saveAlm corra, también corre saveAlmNube
+const _origSaveAlm = saveAlm;
+window.saveAlm = function() {
+    _origSaveAlm();
+    clearTimeout(window._almSaveNubeTimer);
+    window._almSaveNubeTimer = setTimeout(saveAlmNube, 3000);
+};
+
+
+
 
 // 1. Generar manifiesto dinámico con ícono canvas (sin SVG que rompe el HTML parser)
 (function() {
