@@ -11,7 +11,6 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="PIEERS PRO">
     <meta name="description" content="Auditoría y almacén de inventario profesional">
-    <link rel="manifest" id="pwa-manifest">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
     <style>
@@ -265,13 +264,6 @@
     </button>
 
     <!-- Botón instalar app -->
-    <button id="btn-instalar-app" onclick="pwaInstalar()" style="display:none;width:100%;padding:14px 16px;border:2px dashed #333;border-radius:12px;cursor:pointer;text-align:left;align-items:center;gap:14px;background:transparent;margin-top:4px;">
-        <span style="font-size:26px;min-width:36px;text-align:center;">📲</span>
-        <span style="display:flex;flex-direction:column;">
-            <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;color:white;text-transform:uppercase;">INSTALAR COMO APP</span>
-            <span style="font-size:11px;font-weight:400;margin-top:3px;color:#555;line-height:1.4;">Descarga en tu celular para usar sin internet</span>
-        </span>
-    </button>
     <button onclick="descargarApp()" style="width:100%;padding:13px 16px;border:1px solid #333;border-radius:12px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:14px;background:transparent;margin-top:4px;">
         <span style="font-size:24px;min-width:36px;text-align:center;">💾</span>
         <span style="display:flex;flex-direction:column;">
@@ -304,7 +296,6 @@
             <button id="btn-alm-guardar"  onclick="almGuardarSnapshot()" class="hidden">💾 Guardar informe</button>
             <button id="btn-alm-exportar" onclick="almExportar()" class="hidden">📊 Exportar a Excel</button>
             <div class="menu-section">App</div>
-            <button onclick="pwaInstalar();toggleMenu();">📲 Instalar en celular</button>
             <button onclick="descargarApp();toggleMenu();">💾 Guardar archivo HTML</button>
             <button onclick="resetearApp();toggleMenu();" class="menu-btn-danger">⚠️ Borrar todo y reiniciar</button>
         </div>
@@ -1979,17 +1970,3 @@ window.addEventListener('beforeunload', ()=>{ clearTimeout(saveTimer); clearTime
         </div>
     </div>
 </div>
-<!-- ══════ PWA INSTALL BANNER ══════ -->
-<div id="pwa-banner">
-    <div class="pwa-banner-icon">📦</div>
-    <div class="pwa-banner-txt">
-        <strong>INSTALAR PIEERS PRO</strong>
-        <span>Instala la app en tu celular para usarla sin internet</span>
-    </div>
-    <button class="pwa-banner-btn pwa-install-btn" onclick="pwaInstalar()">INSTALAR</button>
-    <button class="pwa-banner-btn pwa-dismiss-btn" onclick="pwaDismiss()">✕</button>
-</div>
-
-
-</body>
-</html>
