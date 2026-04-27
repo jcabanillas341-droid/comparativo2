@@ -661,6 +661,9 @@ function hideLoading()     { document.getElementById('loading-overlay').style.di
 
 // ── SELECTOR MODO ──
 function seleccionarModo(modo) {
+    // Cerrar menú siempre
+    const mc = document.getElementById('menuContent');
+    if (mc) mc.style.display = 'none';
     try {
         modoActual = modo;
         const $ = id => document.getElementById(id);
@@ -713,6 +716,8 @@ function seleccionarModo(modo) {
 }
 
 function volverSelector() {
+    const mc = document.getElementById('menuContent');
+    if (mc) mc.style.display = 'none';
     document.getElementById('pantalla-modo').style.display = 'flex';
     document.getElementById('app-principal').classList.add('hidden');
     modoActual = null;
@@ -1922,19 +1927,29 @@ function agregarAlConteoDesdeAlm(cod) {
 // ── DESCARGAR APP COMO ARCHIVO HTML ──
 function descargarApp() {
     try {
-        const html = document.documentElement.outerHTML;
+        // Obtener HTML completo de la página actual
+        const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
         const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href     = url;
-        a.download = 'PIEERS_PRO_v17.html';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast('💾 Descargando PIEERS_PRO_v17.html...', '#111');
+
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+            // Internet Explorer
+            window.navigator.msSaveOrOpenBlob(blob, 'PIEERS_PRO_v20.html');
+        } else {
+            const url = URL.createObjectURL(blob);
+            const a   = document.createElement('a');
+            a.style.display = 'none';
+            a.href     = url;
+            a.download = 'PIEERS_PRO_v20.html';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 1000);
+        }
+        showToast('💾 Descargando PIEERS_PRO_v20.html...', '#1B5E20');
     } catch(e) {
-        alert('Para guardar: Menú del navegador → "Guardar página como..." → Guardar como HTML');
+        showToast('⚠️ Usa el menú del navegador → Guardar página como...', '#E65100');
     }
 }
 
