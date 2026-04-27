@@ -13,17 +13,7 @@
     <meta name="description" content="Auditoría y almacén de inventario profesional">
     <link rel="manifest" id="pwa-manifest">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <script>
-        // ── SUPABASE CONFIG ──
-        const SB_URL  = 'https://nptsmrjtleudvcjfulsq.supabase.co';
-        const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wdHNtcmp0bGV1ZHZjamZ1bHNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxOTUxMjEsImV4cCI6MjA5Mjc3MTEyMX0.40tMe-L-nbJw5tdsFYGMb9AG1VaBzpIdVqwDC3pGTNI';
-        const SB_H    = { 'apikey': SB_KEY, 'Authorization': 'Bearer '+SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
-        async function sbGet(tabla, params='')    { const r=await fetch(`${SB_URL}/rest/v1/${tabla}?${params}`,{headers:SB_H}); return r.ok?r.json():null; }
-        async function sbPost(tabla, body)        { const r=await fetch(`${SB_URL}/rest/v1/${tabla}`,{method:'POST',headers:SB_H,body:JSON.stringify(body)}); return r.ok?r.json():null; }
-        async function sbPatch(tabla, params, body){ const r=await fetch(`${SB_URL}/rest/v1/${tabla}?${params}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=minimal'},body:JSON.stringify(body)}); return r.ok; }
-        async function sbDelete(tabla, params)    { const r=await fetch(`${SB_URL}/rest/v1/${tabla}?${params}`,{method:'DELETE',headers:SB_H}); return r.ok; }
-        async function sbUpsert(tabla, body, onConflict){ const r=await fetch(`${SB_URL}/rest/v1/${tabla}?on_conflict=${onConflict}`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(body)}); return r.ok; }
-    </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap');
 
@@ -124,73 +114,7 @@
         .card-lote  { background: #1a1a1a; padding: 14px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--rojo); }
         .hidden     { display: none !important; }
 
-        /* ── LOGIN SCREEN ── */
-        #pantalla-login { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:var(--negro); padding:24px; gap:0; }
-        .login-logo { font-family:'Barlow Condensed',sans-serif; font-size:42px; font-weight:900; color:white; letter-spacing:3px; margin-bottom:4px; }
-        .login-logo span { color:var(--rojo); }
-        .login-sub { font-size:11px; color:#555; letter-spacing:2px; text-transform:uppercase; margin-bottom:36px; }
-        .login-card { background:#111; border-radius:16px; padding:24px 20px; width:100%; max-width:340px; border:1px solid #222; }
-        .login-label { font-size:11px; color:#666; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; font-family:'Barlow',sans-serif; }
-        .login-users { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
-        .login-user-btn { padding:14px 16px; border-radius:10px; border:2px solid #222; background:#1a1a1a; color:white; font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:700; letter-spacing:1px; cursor:pointer; text-align:left; display:flex; align-items:center; gap:12px; transition:all 0.15s; }
-        .login-user-btn:active, .login-user-btn.sel { border-color:var(--rojo); background:#1a0a0a; }
-        .login-user-btn .u-rol { font-size:10px; color:#555; margin-left:auto; letter-spacing:1px; }
-        .login-user-btn.sel .u-rol { color:var(--rojo); }
-        .login-pin-wrap { margin-bottom:20px; }
-        .login-pin-dots { display:flex; gap:10px; justify-content:center; margin:12px 0; }
-        .login-pin-dot { width:14px; height:14px; border-radius:50%; border:2px solid #333; background:transparent; transition:all 0.1s; }
-        .login-pin-dot.filled { background:var(--rojo); border-color:var(--rojo); }
-        .login-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-        .login-key { padding:16px 8px; border-radius:10px; border:1px solid #222; background:#1a1a1a; color:white; font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:700; cursor:pointer; transition:all 0.1s; text-align:center; }
-        .login-key:active { background:#333; transform:scale(0.95); }
-        .login-key.del { font-size:16px; color:#888; }
-        .login-key.ok  { background:var(--rojo); color:white; border-color:var(--rojo); }
-        .login-error { color:#E57373; font-size:12px; text-align:center; margin-top:8px; min-height:18px; font-family:'Barlow',sans-serif; }
-        .login-online { display:flex; flex-wrap:wrap; gap:6px; margin-top:20px; }
-        .login-online-chip { background:#0a1a0a; border:1px solid #1a3a1a; border-radius:20px; padding:4px 10px; font-size:11px; color:#4CAF50; font-family:'Barlow',sans-serif; display:flex; align-items:center; gap:4px; }
-        .login-online-chip::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:#4CAF50; }
-
-        /* ── BADGE USUARIO EN HEADER ── */
-        .header-user { font-size:10px; color:#888; font-family:'Barlow',sans-serif; margin-left:6px; padding:2px 8px; background:#1a1a1a; border-radius:10px; border:1px solid #2a2a2a; }
-        .header-user span { color:white; font-weight:600; }
-
-        /* ── PANEL USUARIOS CONECTADOS ── */
-        #panel-online { display:none; flex-wrap:wrap; gap:5px; align-items:center; padding:4px 10px; background:#0a1a0a; border-bottom:1px solid #1a3a1a; flex-shrink:0; }
-        #panel-online.visible { display:flex; }
-        .online-chip { background:#111; border:1px solid #1a3a1a; border-radius:20px; padding:4px 10px; font-size:11px; color:#4CAF50; font-family:'Barlow',sans-serif; display:flex; align-items:center; gap:5px; }
-        .online-chip::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:#4CAF50; animation:pulse-dot 2s infinite; }
-        @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        #pwa-banner { display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:var(--negro); border-top:3px solid var(--rojo); padding:12px 16px; flex-direction:row; align-items:center; gap:10px; box-shadow:0 -4px 20px rgba(0,0,0,0.6); }
-        #pwa-banner.visible { display:flex; }
-        .pwa-banner-icon { font-size:28px; flex-shrink:0; }
-        .pwa-banner-txt { flex:1; }
-        .pwa-banner-txt strong { display:block; font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:900; color:white; letter-spacing:1px; }
-        .pwa-banner-txt span { font-size:11px; color:#888; font-family:'Barlow',sans-serif; }
-        .pwa-banner-btn { padding:10px 16px; border:none; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:900; cursor:pointer; white-space:nowrap; }
-        .pwa-install-btn { background:var(--rojo); color:white; }
-        .pwa-dismiss-btn { background:#222; color:#666; font-size:18px; padding:8px 12px; }
-
-
-        /* Barra botones BUSCAR | RETIRO */
-        .alm-action-bar { display: flex; gap: 5px; flex-shrink: 0; padding: 3px 0 2px; }
-        .alm-btn-buscar { flex: 1; padding: 9px 5px; border: 2px solid var(--negro-soft); border-radius: 8px; background: var(--negro-soft); color: var(--blanco); cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; transition: filter 0.15s; }
-        .alm-btn-buscar:active { filter: brightness(0.85); }
-        .alm-btn-retiro { flex: 1.6; padding: 9px 5px; border: 2px solid var(--rojo); border-radius: 8px; background: var(--negro); color: white; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; transition: all 0.15s; }
-        .alm-btn-retiro:active { filter: brightness(0.85); }
-
-        #alm-estado-badge { font-size: 15px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.5px; color: var(--gris-mid); flex-shrink: 0; text-align: center; padding: 8px 12px; background: var(--gris-bg); border-radius: 8px; border: 1px solid var(--gris-borde); }
-
-        .alm-load-row { display: flex; gap: 5px; flex-shrink: 0; }
-        .alm-load-btn { flex: 1; padding: 8px 6px; border: none; border-radius: 8px; cursor: pointer; font-size: 10px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.3px; text-transform: uppercase; transition: filter 0.15s; }
-        .alm-load-btn:active { filter: brightness(0.85); }
-
-        .alm-footer-row { display: flex; gap: 5px; flex-shrink: 0; }
-        .alm-footer-btn { flex: 1; padding: 7px 4px; border: none; border-radius: 7px; cursor: pointer; font-size: 10px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.3px; text-transform: uppercase; transition: filter 0.15s; }
-        .alm-footer-btn:active { filter: brightness(0.85); }
-
-        #alm-filtro-rapido { flex: 1; padding: 7px 10px; border-radius: 7px; border: 1px solid var(--gris-borde); background: var(--gris-bg); color: var(--texto); font-size: 12px; font-family: 'Barlow', sans-serif; }
-        #alm-filtro-rapido:focus { outline: none; border-color: var(--rojo); }
-        #alm-filtro-rapido::placeholder { color: var(--gris-mid); }
+        
 
         /* ── MODAL BÚSQUEDA ── */
         #modal-busqueda { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 6000; justify-content: center; align-items: flex-start; padding: 30px 16px 16px; }
@@ -321,7 +245,7 @@
 <body class="modo-comp">
 
 <!-- ══════ SELECTOR ══════ -->
-<div id="pantalla-modo" style="display:none;">
+<div id="pantalla-modo">
     <div class="logo-modo">⬡ <span class="logo-acento">PIEERS</span> AUDITOR PRO</div>
     <div class="logo-sub">SELECCIONA EL MODO DE TRABAJO</div>
     <div class="logo-v">v7.0</div>
@@ -358,55 +282,14 @@
     <div style="font-size:10px;color:#444;text-align:center;margin-top:8px;font-family:'Barlow',sans-serif;letter-spacing:1px;">PIEERS PRO · v17</div>
 </div>
 
-<!-- ══════ PANTALLA LOGIN ══════ -->
-<div id="pantalla-login">
-    <div class="login-logo"><span>P</span>IEERS PRO</div>
-    <div class="login-sub">Sistema de inventario</div>
-    <div class="login-card">
-        <div class="login-label">Selecciona tu usuario</div>
-        <div class="login-users" id="login-users-lista">
-            <div style="color:#555;font-size:13px;text-align:center;padding:12px;">Cargando usuarios...</div>
-        </div>
-        <div class="login-pin-wrap" id="login-pin-section" style="display:none;">
-            <div class="login-label">Ingresa tu PIN</div>
-            <div class="login-pin-dots" id="pin-dots">
-                <div class="login-pin-dot" id="d0"></div>
-                <div class="login-pin-dot" id="d1"></div>
-                <div class="login-pin-dot" id="d2"></div>
-                <div class="login-pin-dot" id="d3"></div>
-            </div>
-            <div class="login-keypad">
-                <button class="login-key" onclick="loginKey('1')">1</button>
-                <button class="login-key" onclick="loginKey('2')">2</button>
-                <button class="login-key" onclick="loginKey('3')">3</button>
-                <button class="login-key" onclick="loginKey('4')">4</button>
-                <button class="login-key" onclick="loginKey('5')">5</button>
-                <button class="login-key" onclick="loginKey('6')">6</button>
-                <button class="login-key" onclick="loginKey('7')">7</button>
-                <button class="login-key" onclick="loginKey('8')">8</button>
-                <button class="login-key" onclick="loginKey('9')">9</button>
-                <button class="login-key del" onclick="loginDel()">⌫</button>
-                <button class="login-key" onclick="loginKey('0')">0</button>
-                <button class="login-key ok" onclick="loginOk()">✓</button>
-            </div>
-            <div class="login-error" id="login-error"></div>
-        </div>
-        <div id="login-online-wrap" style="display:none;">
-            <div class="login-label" style="margin-top:4px;">Ahora conectados</div>
-            <div class="login-online" id="login-online-lista"></div>
-        </div>
-    </div>
-</div>
 
-<!-- ══════ PANEL USUARIOS EN LÍNEA ══════ -->
 <!-- ══════ APP PRINCIPAL ══════ -->
-<div id="app-principal" class="hidden" style="flex-direction:column;height:100vh;">
+<div id="app-principal" style="display:flex;flex-direction:column;height:100vh;">
 
     <div class="header-app">
         <div style="display:flex;align-items:center;">
             <span class="header-logo"><span class="logo-red">P</span>IEERS PRO</span>
             <span class="badge-modo" id="badge-txt">COMPARATIVO</span>
-            <span class="header-user" id="header-user-badge" style="display:none;">👤 <span id="header-user-nombre">—</span></span>
         </div>
         <div style="display:flex;gap:6px;">
             <button class="btn-cambio" onclick="volverSelector()">← INICIO</button>
@@ -423,11 +306,10 @@
             <div class="menu-section">App</div>
             <button onclick="pwaInstalar();toggleMenu();">📲 Instalar en celular</button>
             <button onclick="descargarApp();toggleMenu();">💾 Guardar archivo HTML</button>
-            <button onclick="cerrarSesion();toggleMenu();" style="color:#E57373;">🔓 Cerrar sesión</button>
             <button onclick="resetearApp();toggleMenu();" class="menu-btn-danger">⚠️ Borrar todo y reiniciar</button>
         </div>
     </div>
-    <div id="panel-online"></div>
+    
 
     <input type="file" id="fileInput"      class="hidden" accept=".xlsx,.xls,.txt,.csv">
     <input type="file" id="stockInput"     class="hidden" accept=".csv,.xlsx,.xls">
@@ -592,7 +474,9 @@
 
 
 
-    <!-- LOADING -->
+
+</div><!-- fin app-principal -->
+<!-- LOADING -->
     <div id="loading-overlay"><div class="spinner"></div><div id="loading-txt">Cargando...</div></div>
 
     <!-- TOAST -->
@@ -609,8 +493,6 @@
             </div>
         </div>
     </div>
-
-</div><!-- fin app-principal -->
 
 <!-- ══════ MODAL BÚSQUEDA ALMACÉN ══════ -->
 <div id="modal-busqueda">
@@ -677,6 +559,14 @@
 
 <script>
 'use strict';
+// ── INICIO DIRECTO SIN LOGIN ──
+window.addEventListener('load', () => {
+    const app = document.getElementById('app-principal');
+    if (app) { app.classList.remove('hidden'); app.style.display = 'flex'; }
+    const modo = document.getElementById('pantalla-modo');
+    if (modo) modo.style.display = 'flex';
+});
+
 
 const MAX_FILAS_DOM = 60;
 const SAVE_DEBOUNCE = 1500;
@@ -711,7 +601,7 @@ function mostrarConfirm(titulo, msg, cb) {
     const btnY = document.getElementById('btn-confirm-yes');
     if (btnY) {
         btnY.textContent = 'SÍ, CONFIRMAR';
-        btnY.onclick = () => { cerrarConfirm(); if (confirmCallback) confirmCallback(); };
+        btnY.onclick = () => { const fn = confirmCallback; cerrarConfirm(); if (fn) fn(); };
     }
     document.getElementById('modal-confirm').style.display = 'flex';
 }
@@ -1203,7 +1093,7 @@ function renderAlmInformes() {
     const cont = document.getElementById('alm-informes-lista');
     cont.innerHTML = '';
     if (!almSnapshots.length) {
-        cont.innerHTML = '<p style="color:#888;text-align:center;margin-top:30px;font-family:Barlow,sans-serif;">Sin informes guardados</p>';
+        cont.innerHTML = '<p style="color:#888;text-align:center;margin-top:30px;font-family:Barlow,sans-serif;font-size:13px;">Sin informes guardados</p>';
         return;
     }
     [...almSnapshots].reverse().forEach((snap, ri) => {
@@ -1211,47 +1101,34 @@ function renderAlmInformes() {
         const card = document.createElement('div');
         card.style.cssText = 'background:var(--gris-bg);border-radius:10px;padding:12px 14px;border-left:4px solid var(--rojo);margin-bottom:6px;';
 
-        // Header info
         const info = document.createElement('div');
         info.innerHTML = '<div style="font-family:Arial,sans-serif;font-size:15px;font-weight:900;color:var(--rojo);margin-bottom:2px;">' + snap.nombre + '</div>'
-            + '<div style="font-size:11px;color:#888;margin-bottom:8px;">' + snap.fecha + ' | ' + (snap.totalCodigos||0).toLocaleString() + ' cod. | ' + (snap.totalUnidades||0).toLocaleString() + ' uds.</div>';
+            + '<div style="font-size:11px;color:#888;margin-bottom:10px;">' + snap.fecha + ' | ' + (snap.totalCodigos||0).toLocaleString() + ' cod. | ' + (snap.totalUnidades||0).toLocaleString() + ' uds.</div>';
         card.appendChild(info);
 
-        // Buttons row
         const row = document.createElement('div');
-        row.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;';
+        row.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
 
-        const mkBtn = (label, bg, color) => {
-            const b = document.createElement('button');
-            b.textContent = label;
-            b.style.cssText = 'padding:8px 12px;border:none;border-radius:6px;background:' + bg + ';color:' + color + ';font-family:Arial,sans-serif;font-size:12px;font-weight:700;cursor:pointer;';
-            return b;
-        };
+        // Botón DESCARGAR EXCEL
+        const btnXls = document.createElement('button');
+        btnXls.textContent = '📊 DESCARGAR EXCEL';
+        btnXls.style.cssText = 'flex:1;padding:11px;border:none;border-radius:8px;background:#1B5E20;color:white;font-family:Arial,sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
+        btnXls.addEventListener('click', () => almExportarSnap(i));
 
-        const btnVer  = mkBtn('👁 VER',      '#1565C0', 'white');
-        const btnRean = mkBtn('▶ REANUDAR',  '#111111', 'white');
-        const btnXls  = mkBtn('📊 EXCEL',    '#1B5E20', 'white');
-        const btnDel  = mkBtn('🗑️ BORRAR',   '#1a0000', '#E57373');
-        btnDel.style.border = '1px solid #c62828';
+        // Botón ELIMINAR
+        const btnDel = document.createElement('button');
+        btnDel.textContent = '🗑️';
+        btnDel.style.cssText = 'padding:11px 16px;border:1px solid #c62828;border-radius:8px;background:#1a0000;color:#E57373;font-size:14px;cursor:pointer;';
+        btnDel.addEventListener('click', () => {
+            almSnapshots.splice(i, 1);
+            try { localStorage.setItem("p_alm_snaps_v1", JSON.stringify(almSnapshots)); } catch(e) {}
+            renderAlmInformes();
+            showToast("Informe eliminado", "#E65100");
+        });
 
-        btnVer.addEventListener('click',  () => almVerInforme(i));
-        btnRean.addEventListener('click', () => almReanudarSnap(i));
-        btnXls.addEventListener('click',  () => almExportarSnap(i));
-        btnDel.addEventListener('click',  () => almEliminarSnap(i));
-
-        row.appendChild(btnVer);
-        row.appendChild(btnRean);
         row.appendChild(btnXls);
         row.appendChild(btnDel);
         card.appendChild(row);
-
-        // Visor expandible
-        const visor = document.createElement('div');
-        visor.id = 'visor-snap-' + i;
-        visor.style.display = 'none';
-        visor.style.marginTop = '10px';
-        card.appendChild(visor);
-
         cont.appendChild(card);
     });
 }
@@ -1833,27 +1710,35 @@ function guardarLote() {
 
 // ── RESETEAR ──
 function resetearModulo() {
-    const mod={comp:'COMPARATIVO',alm:'ALMACÉN'}[modoActual]||'módulo';
-    const msg = modoActual==='alm'
-        ? '¿Borrar inventario y movimientos de ALMACÉN?\n\n(Los informes guardados NO se borran)'
-        : `¿Borrar todos los datos de ${mod}?`;
-    mostrarConfirm(`Reiniciar ${mod}`, msg, () => {
-        if (modoActual==='comp') {
-            ['p_maestro_v8','p_hist_v8','p_total_v8','p_desc_v8'].forEach(k=>localStorage.removeItem(k));
-            maestroMap=new Map(); descripcionMap=new Map(); historial=[]; totalEsp=0; renderComp();
+    const mod = {comp:'COMPARATIVO', alm:'ALMACÉN'}[modoActual] || 'módulo';
+    const msg = modoActual === 'alm'
+        ? '¿Borrar TODO el inventario y movimientos de ALMACÉN?\n\nSe borrará también en la nube.\n(Los informes/reportes guardados se conservan)'
+        : '¿Borrar TODOS los datos de COMPARATIVO?\n\nSe borrarán: maestro, conteo, lecturas y avance.';
+    mostrarConfirm('🗑️ Reiniciar ' + mod, msg, () => {
+        if (modoActual === 'comp') {
+            // Borrar TODO lo del comparativo del localStorage
+            ['p_maestro_v8','p_hist_v8','p_total_v8','p_desc_v8','p_lotes_v8'].forEach(k => localStorage.removeItem(k));
+            // Resetear variables en memoria
+            maestroMap = new Map(); descripcionMap = new Map();
+            historial = []; lotes = []; totalEsp = 0;
+            // Re-renderizar pantalla en blanco
+            renderComp();
+            showToast('✅ COMPARATIVO reiniciado — pantalla limpia', '#E65100');
         } else {
-            // Solo borra inventario y movimientos — informes/snapshots se conservan
-            localStorage.removeItem('p_alm_v1');
-            localStorage.removeItem('p_alm_movs_v1');
-            almMap=new Map(); almMovs=[]; renderAlm();
+            // Borrar inventario y movimientos — conservar snapshots/reportes
+            ['p_alm_v1','p_alm_movs_v1'].forEach(k => localStorage.removeItem(k));
+            almMap = new Map(); almMovs = [];
+            showToast('✅ ALMACÉN reiniciado', '#E65100');
+            renderAlm();
         }
-        toggleMenu(); showToast(`✅ ${mod} reiniciado`,'#E65100');
     });
 }
 
 function resetearApp() {
     mostrarConfirm('⚠️ Resetear TODO','Se eliminarán TODOS los datos. No se puede deshacer.', () => {
-        Object.keys(localStorage).filter(k=>['p_maestro','p_hist','p_total','p_lotes','p_alm','p_desc'].some(x=>k.startsWith(x))).forEach(k=>localStorage.removeItem(k));
+        // Borrar TODAS las claves de la app de localStorage
+        ['p_maestro_v8','p_hist_v8','p_total_v8','p_desc_v8','p_lotes_v8',
+         'p_alm_v1','p_alm_movs_v1','p_alm_snaps_v1'].forEach(k=>localStorage.removeItem(k));
         maestroMap=new Map(); descripcionMap=new Map(); historial=[]; lotes=[]; totalEsp=0;
         almMap=new Map(); almMovs=[]; almSnapshots=[];
         toggleMenu(); showToast('✅ Todo reseteado','#111');
@@ -2105,376 +1990,6 @@ window.addEventListener('beforeunload', ()=>{ clearTimeout(saveTimer); clearTime
     <button class="pwa-banner-btn pwa-dismiss-btn" onclick="pwaDismiss()">✕</button>
 </div>
 
-<script>
-// ══════════════════════════════════════════════════════
-//  LOGIN + SINCRONIZACIÓN EN TIEMPO REAL
-// ══════════════════════════════════════════════════════
-let usuarioActual = null;
-let sesionId      = null;
-let syncTimer     = null;
-let pinBuffer     = '';
 
-// ── INICIAR APP ──
-window.addEventListener('load', async () => {
-    // Intentar reanudar sesión guardada
-    const sesGuardada = localStorage.getItem('pieers_sesion');
-    if (sesGuardada) {
-        try {
-            const s = JSON.parse(sesGuardada);
-            if (s.id && s.nombre) {
-                usuarioActual = s;
-                await iniciarSesionNube(s);
-                mostrarAppConUsuario();
-                return;
-            }
-        } catch(e) {}
-    }
-    // Sin sesión → mostrar login
-    await cargarUsuariosLogin();
-    await mostrarConectadosLogin();
-});
-
-// ── CARGAR USUARIOS DESDE SUPABASE ──
-async function cargarUsuariosLogin() {
-    const lista = document.getElementById('login-users-lista');
-    try {
-        const users = await sbGet('usuarios', 'order=rol.asc,nombre.asc');
-        if (!users || !users.length) {
-            lista.innerHTML = '<div style="color:#E57373;font-size:12px;text-align:center;">Sin conexión a la base de datos.<br>Verifica tu internet.</div>';
-            return;
-        }
-        lista.innerHTML = '';
-        users.forEach(u => {
-            const btn = document.createElement('button');
-            btn.className = 'login-user-btn';
-            btn.innerHTML = `<span style="font-size:20px;">${u.rol==='admin'?'👑':'👤'}</span><span>${u.nombre}</span><span class="u-rol">${u.rol.toUpperCase()}</span>`;
-            btn.onclick = () => seleccionarUsuario(u);
-            lista.appendChild(btn);
-        });
-    } catch(e) {
-        lista.innerHTML = '<div style="color:#E57373;font-size:12px;text-align:center;">Sin conexión. Verifica tu internet.</div>';
-    }
-}
-
-// ── SELECCIONAR USUARIO → MOSTRAR PIN ──
-let usuarioSeleccionado = null;
-function seleccionarUsuario(u) {
-    usuarioSeleccionado = u;
-    pinBuffer = '';
-    actualizarDots();
-    document.querySelectorAll('.login-user-btn').forEach(b => b.classList.remove('sel'));
-    event.currentTarget.classList.add('sel');
-    document.getElementById('login-pin-section').style.display = 'block';
-    document.getElementById('login-error').textContent = '';
-}
-
-function loginKey(n) {
-    if (pinBuffer.length >= 4) return;
-    pinBuffer += n;
-    actualizarDots();
-    if (pinBuffer.length === 4) setTimeout(loginOk, 200);
-}
-function loginDel() { pinBuffer = pinBuffer.slice(0,-1); actualizarDots(); document.getElementById('login-error').textContent=''; }
-function actualizarDots() {
-    for(let i=0;i<4;i++) {
-        const d=document.getElementById('d'+i);
-        if(d) d.className='login-pin-dot'+(i<pinBuffer.length?' filled':'');
-    }
-}
-async function loginOk() {
-    if (!usuarioSeleccionado) { document.getElementById('login-error').textContent='Selecciona un usuario'; return; }
-    if (pinBuffer.length < 4)  { document.getElementById('login-error').textContent='Ingresa 4 dígitos'; return; }
-    if (pinBuffer !== usuarioSeleccionado.pin) {
-        document.getElementById('login-error').textContent='PIN incorrecto';
-        pinBuffer=''; actualizarDots(); return;
-    }
-    // Login correcto
-    usuarioActual = { id: usuarioSeleccionado.id, nombre: usuarioSeleccionado.nombre, rol: usuarioSeleccionado.rol };
-    localStorage.setItem('pieers_sesion', JSON.stringify(usuarioActual));
-    await iniciarSesionNube(usuarioActual);
-    mostrarAppConUsuario();
-}
-
-// ── INICIAR SESIÓN EN NUBE ──
-async function iniciarSesionNube(u) {
-    try {
-        // Marcar sesiones anteriores de este usuario como inactivas
-        await sbPatch('sesiones', `usuario_id=eq.${u.id}&activo=eq.true`, { activo: false });
-        const rows = await sbPost('sesiones', {
-            usuario_id: u.id,
-            usuario_nombre: u.nombre,
-            modulo: 'inicio',
-            dispositivo: navigator.userAgent.includes('Android')?'Android':navigator.userAgent.includes('iPhone')?'iPhone':'Desktop',
-            activo: true
-        });
-        if (rows && rows[0]) sesionId = rows[0].id;
-    } catch(e) {}
-}
-
-// ── ACTUALIZAR MÓDULO EN SESIÓN ──
-async function actualizarSesionModulo(modulo) {
-    if (!sesionId) return;
-    try { await sbPatch('sesiones', `id=eq.${sesionId}`, { modulo, updated_at: new Date().toISOString() }); } catch(e) {}
-}
-
-// ── MOSTRAR APP ──
-function mostrarAppConUsuario() {
-    document.getElementById('pantalla-login').style.display = 'none';
-    const app = document.getElementById('app-principal');
-    app.classList.remove('hidden');
-    app.style.display = 'flex';
-    // Mostrar badge de usuario en header
-    const badge = document.getElementById('header-user-badge');
-    const nombre = document.getElementById('header-user-nombre');
-    if (badge) badge.style.display = '';
-    if (nombre) nombre.textContent = usuarioActual.nombre;
-    // Mostrar selector de módulo
-    const modo = document.getElementById('pantalla-modo');
-    if (modo) modo.style.display = 'flex';
-    // Iniciar sincronización de usuarios conectados
-    iniciarSyncOnline();
-    // Cargar inventario almacén desde nube
-    cargarAlmDesdeNube();
-}
-
-// ── MOSTRAR CONECTADOS EN LOGIN ──
-async function mostrarConectadosLogin() {
-    try {
-        const activos = await sbGet('sesiones','activo=eq.true&order=updated_at.desc');
-        const wrap = document.getElementById('login-online-wrap');
-        const lista = document.getElementById('login-online-lista');
-        if (!activos || !activos.length) { if(wrap) wrap.style.display='none'; return; }
-        if(wrap) wrap.style.display='block';
-        lista.innerHTML = '';
-        activos.slice(0,5).forEach(s => {
-            const chip = document.createElement('div');
-            chip.className = 'login-online-chip';
-            chip.textContent = `${s.usuario_nombre} · ${s.modulo||'inicio'}`;
-            lista.appendChild(chip);
-        });
-    } catch(e) {}
-}
-
-// ── SINCRONIZAR USUARIOS CONECTADOS EN TIEMPO REAL ──
-function iniciarSyncOnline() {
-    actualizarPanelOnline();
-    clearInterval(syncTimer);
-    // Cada 30s: heartbeat (actualiza updated_at) + refresca panel
-    syncTimer = setInterval(async () => {
-        if (sesionId) {
-            try { await sbPatch('sesiones', `id=eq.${sesionId}`, { updated_at: new Date().toISOString(), activo: true }); } catch(e) {}
-        }
-        actualizarPanelOnline();
-    }, 30000);
-}
-
-async function actualizarPanelOnline() {
-    try {
-        const cutoff = new Date(Date.now() - 2*60*1000).toISOString(); // 2 min
-        const activos = await sbGet('sesiones', `activo=eq.true&updated_at=gte.${cutoff}&order=updated_at.desc`);
-        const panel = document.getElementById('panel-online');
-        if (!activos || activos.length <= 1) { if(panel) panel.classList.remove('visible'); return; }
-        panel.innerHTML = '<span style="font-size:10px;color:#4CAF50;letter-spacing:1px;font-family:Barlow,sans-serif;flex-shrink:0;">EN LÍNEA:</span>';
-        activos.forEach(s => {
-            if (s.id === sesionId) return; // No mostrarme a mí mismo
-            const chip = document.createElement('div');
-            chip.className = 'online-chip';
-            const modLabel = {comp:'Auditando',alm:'Almacén',inicio:'Inicio'}[s.modulo]||s.modulo||'App';
-            chip.textContent = `${s.usuario_nombre} · ${modLabel}`;
-            panel.appendChild(chip);
-        });
-        if (panel.children.length > 1) panel.classList.add('visible');
-        else panel.classList.remove('visible');
-    } catch(e) {}
-}
-
-// ── CERRAR SESIÓN ──
-async function cerrarSesion() {
-    if (sesionId) {
-        try { await sbPatch('sesiones', `id=eq.${sesionId}`, { activo:false }); } catch(e) {}
-    }
-    clearInterval(syncTimer);
-    localStorage.removeItem('pieers_sesion');
-    usuarioActual = null; sesionId = null;
-    document.getElementById('pantalla-login').style.display = 'flex';
-    document.getElementById('app-principal').style.display = 'none';
-    document.getElementById('pantalla-modo').style.display = 'none';
-    document.getElementById('panel-online').classList.remove('visible');
-    pinBuffer=''; usuarioSeleccionado=null;
-    document.getElementById('login-pin-section').style.display='none';
-    cargarUsuariosLogin();
-    mostrarConectadosLogin();
-}
-
-// ── GUARDAR ALM EN NUBE ──
-async function saveAlmNube() {
-    if (!almMap.size) return;
-    const rows = [];
-    almMap.forEach((v,k) => rows.push({ codigo:k, descripcion:v.desc||'', stock:v.stock, updated_at:new Date().toISOString() }));
-    try {
-        // Upsert en lotes de 100
-        for(let i=0;i<rows.length;i+=100) {
-            await sbUpsert('alm_inventario', rows.slice(i,i+100), 'codigo');
-        }
-    } catch(e) {}
-}
-
-// ── CARGAR ALM DESDE NUBE ──
-async function cargarAlmDesdeNube() {
-    try {
-        // Cargar en páginas de 1000
-        let offset=0, total=0;
-        while(true) {
-            const rows = await sbGet('alm_inventario', `order=codigo.asc&limit=1000&offset=${offset}`);
-            if (!rows || !rows.length) break;
-            rows.forEach(r => {
-                if (!almMap.has(r.codigo)) almMap.set(r.codigo, { desc:r.descripcion||'', stock:r.stock||0 });
-            });
-            total += rows.length;
-            offset += 1000;
-            if (rows.length < 1000) break;
-        }
-        if (total > 0) {
-            renderAlm();
-            showToast(`☁️ ${total.toLocaleString()} productos cargados desde la nube`, '#1B5E20');
-        }
-    } catch(e) {}
-}
-
-// ── GUARDAR MOVIMIENTO EN NUBE ──
-async function guardarMovNube(mov) {
-    if (!mov) return;
-    try {
-        await sbPost('alm_movimientos', {
-            codigo: mov.cod,
-            tipo: mov.tipo,
-            cantidad: mov.cant,
-            stock_post: mov.stockPost,
-            usuario_nombre: usuarioActual?.nombre || 'Anónimo'
-        });
-    } catch(e) {}
-}
-
-// ── HOOK seleccionarModo: actualizar módulo en nube SIN recursión ──
-// Parcheamos desde fuera llamando a la función original directamente
-document.querySelectorAll('[onclick*="seleccionarModo"]').forEach(btn => {
-    const match = btn.getAttribute('onclick').match(/seleccionarModo\('(\w+)'\)/);
-    if (match) {
-        btn.addEventListener('click', () => actualizarSesionModulo(match[1]));
-    }
-});
-
-// ── HOOK schedSaveAlm: después de guardar local, guardar en nube ──
-// Sobrescribimos el timer de guardado para añadir sync a nube
-const _origSchedule = schedSaveAlm;
-window._almSaveNubeTimer = null;
-// Monkey-patch: cada vez que saveAlm corra, también corre saveAlmNube
-const _origSaveAlm = saveAlm;
-window.saveAlm = function() {
-    _origSaveAlm();
-    clearTimeout(window._almSaveNubeTimer);
-    window._almSaveNubeTimer = setTimeout(saveAlmNube, 3000);
-};
-
-
-
-
-// 1. Generar manifiesto dinámico con ícono canvas (sin SVG que rompe el HTML parser)
-(function() {
-    try {
-        // Generar ícono via Canvas
-        const canvas = document.createElement('canvas');
-        canvas.width = 512; canvas.height = 512;
-        const ctx = canvas.getContext('2d');
-        // Fondo negro redondeado
-        ctx.fillStyle = '#0a0a0a';
-        ctx.beginPath(); ctx.roundRect(0,0,512,512,80); ctx.fill();
-        // Barra roja
-        ctx.fillStyle = '#D32F2F';
-        ctx.fillRect(80, 310, 352, 10);
-        // Texto PIEERS
-        ctx.fillStyle = '#D32F2F';
-        ctx.font = 'bold 90px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('PIEERS', 256, 200);
-        // Texto PRO
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 70px Arial';
-        ctx.fillText('PRO', 256, 290);
-        // Texto AUDITOR
-        ctx.fillStyle = '#555';
-        ctx.font = '35px Arial';
-        ctx.fillText('AUDITOR', 256, 390);
-        const iconData = canvas.toDataURL('image/png');
-
-        const manifest = {
-            name: 'PIEERS PRO',
-            short_name: 'PIEERS',
-            description: 'Auditoría y gestión de almacén',
-            start_url: './',
-            display: 'standalone',
-            background_color: '#0a0a0a',
-            theme_color: '#0a0a0a',
-            orientation: 'portrait',
-            icons: [
-                { src: iconData, sizes: '192x192', type: 'image/png' },
-                { src: iconData, sizes: '512x512', type: 'image/png' }
-            ]
-        };
-        const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
-        document.getElementById('pwa-manifest').href = URL.createObjectURL(blob);
-    } catch(e) { console.warn('PWA manifest:', e); }
-})();
-
-// 2. Service Worker — solo funciona desde https:// con archivo real, no desde blob
-// Se omite el registro inline para evitar errores de consola que bloquean el app
-
-// 3. Capturar evento de instalación
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    if (!localStorage.getItem('pwa_dismissed')) {
-        const banner = document.getElementById('pwa-banner');
-        if (banner) banner.classList.add('visible');
-    }
-    const btn = document.getElementById('btn-instalar-app');
-    if (btn) btn.style.display = 'flex';
-});
-
-window.addEventListener('appinstalled', () => {
-    const banner = document.getElementById('pwa-banner');
-    if (banner) banner.classList.remove('visible');
-    deferredPrompt = null;
-    if (typeof showToast === 'function') showToast('✅ PIEERS PRO instalada', '#1B5E20');
-});
-
-function pwaInstalar() {
-    if (!deferredPrompt) { mostrarInstruccionesInstalacion(); return; }
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(choice => {
-        if (choice.outcome === 'accepted' && typeof showToast === 'function')
-            showToast('✅ Instalando PIEERS PRO...', '#111');
-        deferredPrompt = null;
-        const banner = document.getElementById('pwa-banner');
-        if (banner) banner.classList.remove('visible');
-    });
-}
-
-function pwaDismiss() {
-    const banner = document.getElementById('pwa-banner');
-    if (banner) banner.classList.remove('visible');
-    localStorage.setItem('pwa_dismissed', '1');
-}
-
-function mostrarInstruccionesInstalacion() {
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    let msg = isIOS
-        ? 'iOS: Toca el boton Compartir y luego "Agregar a pantalla de inicio"'
-        : 'Chrome/Android: Menu (tres puntos) y luego "Agregar a pantalla de inicio"\n\nO busca el icono de instalacion en la barra de direcciones';
-    alert('INSTALAR PIEERS PRO\n\n' + msg);
-}
-
-</script>
 </body>
 </html>
